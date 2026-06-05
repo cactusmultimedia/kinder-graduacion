@@ -1,1548 +1,818 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keyboard Combos - Aprende el Teclado</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graduación Kindergarten - Scrollaroids</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 50%, #2980b9 100%);
+            overflow-x: hidden;
+            color: white;
+        }
 
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: #0f0f13;
-    color: #e8e8ed;
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-image:
-      radial-gradient(ellipse at 20% 50%, rgba(88, 28, 135, 0.08) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 50%, rgba(20, 100, 200, 0.08) 0%, transparent 50%);
-  }
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+        }
 
-  #app {
-    width: 100%;
-    max-width: 560px;
-    padding: 24px 20px;
-    position: relative;
-  }
+        .hero h1 {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-  /* Header */
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 28px;
-  }
+        .hero p {
+            font-size: 1.8rem;
+            opacity: 0.9;
+            max-width: 700px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+        }
 
-  .stat {
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 14px;
-    padding: 10px 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    backdrop-filter: blur(8px);
-  }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 2rem;
+            animation: bounce 2s infinite;
+            font-size: 2rem;
+            color: rgba(255,255,255,0.7);
+        }
 
-  .stat .icon { font-size: 18px; }
-  .stat .value { color: #fff; font-variant-numeric: tabular-nums; }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
 
-  .stat-score .value { color: #fbbf24; }
-  .stat-level .value { color: #60a5fa; }
-  .stat-lives { min-width: 90px; justify-content: center; }
-  .stat-lives .value { font-size: 18px; letter-spacing: 2px; }
+        .polaroids-container {
+            position: relative;
+            height: 600vh;
+            padding: 2rem;
+        }
 
-  /* Level bar */
-  .level-bar-wrap {
-    background: rgba(255,255,255,0.05);
-    border-radius: 100px;
-    height: 6px;
-    margin-bottom: 32px;
-    overflow: hidden;
-  }
-  .level-bar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a78bfa);
-    border-radius: 100px;
-    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
+        .polaroid {
+            position: absolute;
+            background: white;
+            padding: 15px 15px 60px 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            transform-origin: center center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            cursor: pointer;
+        }
 
-  /* Main area */
-  .prompt-label {
-    text-align: center;
-    font-size: 14px;
-    font-weight: 500;
-    color: rgba(255,255,255,0.45);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 16px;
-  }
+        .polaroid:hover {
+            transform: scale(1.1) rotate(0deg) !important;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
 
-  #comboDisplay {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 24px;
-    min-height: 82px;
-    flex-wrap: wrap;
-  }
+        .polaroid img {
+            width: 280px;
+            height: 280px;
+            object-fit: cover;
+            display: block;
+        }
 
-  .keycap {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    font-size: 22px;
-    padding: 14px 22px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.12);
-    color: #fff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 52px;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  }
+        .polaroid .caption {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: #2c3e50;
+            font-style: italic;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
 
-  .keycap.mod {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(139, 92, 246, 0.2));
-    border-color: rgba(99, 102, 241, 0.3);
-    color: #a5b4fc;
-    font-size: 16px;
-    padding: 10px 18px;
-  }
+        .section-title {
+            text-align: center;
+            padding: 8rem 2rem;
+            font-size: 4rem;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
 
-  .keycap.main {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(245, 158, 11, 0.1));
-    border-color: rgba(251, 191, 36, 0.25);
-    color: #fcd34d;
-    font-size: 28px;
-    padding: 16px 26px;
-  }
+        .section-title h2 {
+            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-  .keycap.altgr {
-    background: linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(219, 39, 119, 0.2));
-    border-color: rgba(236, 72, 153, 0.3);
-    color: #f9a8d4;
-    font-size: 16px;
-    padding: 10px 18px;
-  }
+        .footer {
+            height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            background: rgba(0,0,0,0.3);
+        }
 
-  .keycap.sep {
-    background: none;
-    border: none;
-    box-shadow: none;
-    color: rgba(255,255,255,0.25);
-    font-size: 24px;
-    padding: 0 2px;
-    min-width: auto;
-  }
+        .footer h2 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, #f39c12, #e74c3c);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
 
-  .keycap.glow {
-    animation: keyGlow 0.4s ease-out;
-  }
+        .footer p { font-size: 1.4rem; opacity: 0.9; max-width: 600px; }
 
-  @keyframes keyGlow {
-    0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); }
-    100% { box-shadow: 0 0 30px 8px rgba(255,255,255,0); }
-  }
+        /* ============ MODAL CÓDIGO ============ */
+        .modal-codigo-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
 
-  /* Feedback */
-  #feedback {
-    text-align: center;
-    min-height: 44px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 20px;
-  }
+        .modal-codigo-overlay.active { display: flex; }
 
-  .fb-correct {
-    color: #4ade80;
-    font-weight: 700;
-    font-size: 20px;
-    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .fb-wrong {
-    color: #fb7185;
-    font-weight: 600;
-    font-size: 16px;
-    animation: shake 0.4s ease;
-  }
-  .fb-streak {
-    color: #fbbf24;
-    font-size: 14px;
-    font-weight: 600;
-  }
-  .fb-levelup {
-    color: #60a5fa;
-    font-weight: 700;
-    font-size: 22px;
-    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  .fb-waiting {
-    color: rgba(255,255,255,0.3);
-    font-size: 15px;
-  }
+        .modal-codigo-box {
+            background: white;
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
 
-  @keyframes popIn {
-    0% { transform: scale(0.5); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-5px); }
-    80% { transform: translateX(5px); }
-  }
+        .modal-codigo-box h2 {
+            color: #2c3e50;
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
 
-  /* Progress */
-  .progress-wrap {
-    text-align: center;
-    margin-bottom: 20px;
-  }
+        .modal-codigo-box p {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
 
-  .progress-dots {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
+        .modal-codigo-box input {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 3px solid #ddd;
+            border-radius: 12px;
+            outline: none;
+            letter-spacing: 5px;
+            font-weight: bold;
+            color: #2c3e50;
+            text-transform: lowercase;
+            margin-bottom: 1.5rem;
+        }
 
-  .dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.1);
-    transition: all 0.3s;
-  }
+        .modal-codigo-box input:focus {
+            border-color: #3498db;
+        }
 
-  .dot.done {
-    background: #6366f1;
-    border-color: #818cf8;
-    box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
-  }
+        .modal-codigo-box .btn-enviar {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
 
-  .dot.current {
-    background: rgba(251, 191, 36, 0.3);
-    border-color: #fbbf24;
-    animation: pulse 1.5s infinite;
-  }
+        .modal-codigo-box .btn-enviar:hover {
+            transform: scale(1.02);
+        }
 
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.2); opacity: 1; }
-  }
+        .modal-codigo-box .error {
+            color: #e74c3c;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+            display: none;
+        }
 
-  .progress-text {
-    font-size: 13px;
-    color: rgba(255,255,255,0.35);
-  }
+        .modal-codigo-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
 
-  .progress-text strong {
-    color: rgba(255,255,255,0.7);
-    font-weight: 600;
-  }
+        /* ============ MODAL GALERÍA ============ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 2rem;
+        }
 
-  /* Legend */
-  .legend {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 6px 16px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    border-radius: 16px;
-    padding: 14px 20px;
-    margin-top: 16px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.4);
-  }
+        .modal-overlay.active { display: block; }
 
-  .legend span { display: flex; align-items: center; gap: 6px; }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0 1.5rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-  .legend .lk {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 600;
-    font-size: 10px;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 5px;
-    padding: 1px 7px;
-    color: rgba(255,255,255,0.6);
-    text-transform: uppercase;
-  }
+        .modal-header h2 {
+            font-size: 2rem;
+            color: #f39c12;
+        }
 
-  .legend .lk.altgr-lk { border-color: rgba(236, 72, 153, 0.3); color: #f9a8d4; }
+        .modal-header-right {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
 
-  /* Start / Game Over overlay */
-  #overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: rgba(15, 15, 19, 0.85);
-    backdrop-filter: blur(12px);
-    border-radius: 28px;
-    z-index: 10;
-    padding: 40px 24px;
-    transition: opacity 0.4s, visibility 0.4s;
-  }
+        .modal-close {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 45px; height: 45px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
 
-  #overlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
+        .modal-close:hover { transform: scale(1.1); }
 
-  #overlay h1 {
-    font-size: 36px;
-    font-weight: 900;
-    letter-spacing: -1px;
-    margin-bottom: 8px;
-    background: linear-gradient(135deg, #818cf8, #f472b6);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+        /* ============ SELECCIÓN & CORREO ============ */
+        .selection-bar {
+            max-width: 1200px;
+            margin: 0 auto 1.5rem;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.1);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
 
-  #overlay h2 {
-    font-size: 28px;
-    font-weight: 800;
-    margin-bottom: 8px;
-    color: #fb7185;
-  }
+        .selection-bar.active { display: flex; }
 
-  #overlay .sub {
-    color: rgba(255,255,255,0.5);
-    font-size: 15px;
-    line-height: 1.6;
-    margin-bottom: 12px;
-    max-width: 380px;
-  }
+        .selection-count {
+            font-size: 1.1rem;
+            color: #f39c12;
+            font-weight: bold;
+        }
 
-  #overlay .final-score {
-    font-size: 48px;
-    font-weight: 900;
-    color: #fbbf24;
-    margin: 8px 0;
-  }
+        .btn-send-email {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.3s, background 0.3s;
+        }
 
-  #overlay .final-level {
-    font-size: 18px;
-    color: rgba(255,255,255,0.5);
-    margin-bottom: 20px;
-  }
+        .btn-send-email:hover {
+            transform: scale(1.05);
+            background: #219a52;
+        }
 
-  #overlay .final-stats {
-    display: flex;
-    gap: 32px;
-    margin-bottom: 24px;
-  }
-  #overlay .final-stats div {
-    text-align: center;
-  }
-  #overlay .final-stats .num {
-    font-size: 24px;
-    font-weight: 700;
-    color: #fff;
-  }
-  #overlay .final-stats .lbl {
-    font-size: 12px;
-    color: rgba(255,255,255,0.35);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-  }
+        .btn-send-email:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-  .btn {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 16px;
-    padding: 14px 40px;
-    border: none;
-    border-radius: 14px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    color: #fff;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
-    margin-top: 8px;
-  }
+        .btn-clear {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
 
-  .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
-  }
+        .btn-clear:hover { transform: scale(1.05); }
 
-  .btn:active { transform: translateY(0); }
+        /* ============ GALERÍA ============ */
+        .modal-gallery {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
 
-  .btn-restart {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3);
-  }
-  .btn-restart:hover {
-    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
-  }
+        .gallery-item {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+            transition: transform 0.3s;
+            cursor: pointer;
+        }
 
-  /* Streak fire indicator */
-  .streak-fire {
-    display: inline-block;
-    font-size: 20px;
-    animation: fireAnim 0.6s infinite alternate;
-  }
-  @keyframes fireAnim {
-    from { transform: scale(1) rotate(-3deg); }
-    to { transform: scale(1.15) rotate(3deg); }
-  }
+        .gallery-item:hover { transform: scale(1.03); }
 
-  /* Wrong combo show */
-  .fb-combo-shown {
-    font-size: 13px;
-    color: rgba(255,255,255,0.3);
-    font-family: 'JetBrains Mono', monospace;
-  }
+        .gallery-item img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            display: block;
+        }
 
-  /* Scoreboard */
-  .sb-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 20px;
-    padding: 6px 10px;
-    border-radius: 10px;
-    transition: background 0.2s;
-    line-height: 1;
-  }
-  .sb-btn:hover { background: rgba(255,255,255,0.08); }
+        .gallery-item .checkbox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 5;
+        }
 
-  #scoreboardOverlay {
-    position: absolute;
-    inset: 0;
-    z-index: 20;
-    background: rgba(15, 15, 19, 0.9);
-    backdrop-filter: blur(12px);
-    border-radius: 28px;
-    padding: 24px 16px;
-    display: flex;
-    flex-direction: column;
-    transition: opacity 0.3s, visibility 0.3s;
-  }
-  #scoreboardOverlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
+        .gallery-item .checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
 
-  .sb-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding: 0 4px;
-  }
-  .sb-header h2 {
-    font-size: 22px;
-    font-weight: 800;
-    color: #fbbf24;
-  }
-  .sb-close {
-    background: none;
-    border: none;
-    color: rgba(255,255,255,0.4);
-    font-size: 24px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: background 0.2s, color 0.2s;
-  }
-  .sb-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+        .gallery-item.selected .checkbox {
+            background: #27ae60;
+            border-color: #27ae60;
+        }
 
-  #configOverlay {
-    position: absolute;
-    inset: 0;
-    z-index: 25;
-    background: rgba(15, 15, 19, 0.92);
-    backdrop-filter: blur(12px);
-    border-radius: 28px;
-    padding: 24px 16px;
-    display: flex;
-    flex-direction: column;
-    transition: opacity 0.3s, visibility 0.3s;
-  }
-  #configOverlay.hidden {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-  .token-input {
-    font-family: 'JetBrains Mono', monospace;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #fff;
-    font-size: 13px;
-    width: 100%;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .token-input:focus { border-color: rgba(99, 102, 241, 0.5); }
-  .token-input::placeholder { color: rgba(255,255,255,0.15); }
+        .gallery-item.selected .checkbox::after {
+            opacity: 1;
+        }
 
-  .sb-table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
-  }
-  .sb-table-wrap::-webkit-scrollbar { width: 4px; }
-  .sb-table-wrap::-webkit-scrollbar-track { background: transparent; }
-  .sb-table-wrap::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+        .gallery-item.selected {
+            outline: 3px solid #27ae60;
+            outline-offset: -3px;
+        }
 
-  .sb-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .sb-table th {
-    position: sticky;
-    top: 0;
-    background: rgba(15,15,19,0.95);
-    color: rgba(255,255,255,0.4);
-    font-weight: 600;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 8px 6px 6px;
-    text-align: left;
-  }
-  .sb-table td { padding: 6px 6px; border-top: 1px solid rgba(255,255,255,0.04); }
-  .sb-table tr:first-child td { border-top: none; }
-  .sb-table .rank { width: 28px; text-align: center; font-weight: 700; color: rgba(255,255,255,0.3); }
-  .sb-table .name { color: rgba(255,255,255,0.85); font-weight: 500; }
-  .sb-table .sc { color: #fbbf24; font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-  .sb-table .lvl { color: rgba(255,255,255,0.35); font-size: 12px; text-align: center; }
-  .sb-table .dt { color: rgba(255,255,255,0.2); font-size: 11px; text-align: right; }
+        .gallery-item .foto-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
 
-  .sb-table tr.top1 td { background: rgba(251, 191, 36, 0.06); }
-  .sb-table tr.top2 td { background: rgba(168, 162, 158, 0.04); }
-  .sb-table tr.top3 td { background: rgba(180, 83, 9, 0.04); }
+        .modal-empty {
+            max-width: 1200px;
+            margin: 2rem auto;
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 2px dashed rgba(255,255,255,0.2);
+        }
 
-  .sb-table tr.me td { background: rgba(99, 102, 241, 0.08); }
-  .sb-table tr.me .rank { color: #818cf8; }
+        .modal-empty p { font-size: 1.3rem; opacity: 0.6; }
 
-  .sb-empty {
-    text-align: center;
-    padding: 40px 20px;
-    color: rgba(255,255,255,0.25);
-  }
-  .sb-empty .icon { font-size: 40px; display: block; margin-bottom: 12px; }
-  .sb-empty .txt { font-size: 14px; }
-  .sb-loading {
-    text-align: center;
-    padding: 40px;
-    color: rgba(255,255,255,0.3);
-    font-size: 14px;
-  }
+        /* ============ LIGHTBOX ============ */
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
 
-  /* Name input for game over */
-  .name-input-wrap {
-    margin-top: 8px;
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-  }
-  .name-input-wrap.hidden { display: none; }
+        .lightbox.active { display: flex; }
 
-  .name-input {
-    font-family: 'Inter', sans-serif;
-    background: rgba(255,255,255,0.06);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #fff;
-    font-size: 15px;
-    width: 180px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .name-input:focus { border-color: rgba(99, 102, 241, 0.5); }
-  .name-input::placeholder { color: rgba(255,255,255,0.2); }
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
 
-  .btn-save-score {
-    font-family: 'Inter', sans-serif;
-    font-weight: 700;
-    font-size: 14px;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    color: #fff;
-    transition: transform 0.15s, box-shadow 0.15s;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.25);
-  }
-  .btn-save-score:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(245, 158, 11, 0.35); }
-  .btn-save-score:active { transform: translateY(0); }
-  .btn-save-score:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .lightbox-close {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
 
-  .sb-saved-msg {
-    font-size: 13px;
-    color: #4ade80;
-    font-weight: 600;
-    margin-top: 4px;
-  }
+        .lightbox-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
 
-  @media (max-width: 480px) {
-    #app { padding: 16px 12px; }
-    header { gap: 6px; }
-    .stat { padding: 8px 12px; font-size: 12px; }
-    .keycap { font-size: 18px; padding: 10px 16px; min-width: 40px; }
-    .keycap.main { font-size: 22px; padding: 12px 20px; }
-    #comboDisplay { gap: 6px; }
-    #overlay h1 { font-size: 28px; }
-  }
-</style>
+        .lightbox-nav:hover { background: rgba(255,255,255,0.4); }
+        .lightbox-prev { left: 20px; }
+        .lightbox-next { right: 20px; }
+
+        /* Posiciones polaroids */
+        .polaroid:nth-child(1) { top: 2%; left: 8%; transform: rotate(-7deg); }
+        .polaroid:nth-child(2) { top: 2%; left: 52%; transform: rotate(5deg); }
+        .polaroid:nth-child(3) { top: 15%; left: 30%; transform: rotate(-3deg); }
+        .polaroid:nth-child(4) { top: 20%; left: 70%; transform: rotate(6deg); }
+        .polaroid:nth-child(5) { top: 30%; left: 10%; transform: rotate(-4deg); }
+        .polaroid:nth-child(6) { top: 32%; left: 55%; transform: rotate(3deg); }
+        .polaroid:nth-child(7) { top: 42%; left: 25%; transform: rotate(-6deg); }
+        .polaroid:nth-child(8) { top: 45%; left: 65%; transform: rotate(4deg); }
+        .polaroid:nth-child(9) { top: 55%; left: 5%; transform: rotate(-3deg); }
+        .polaroid:nth-child(10) { top: 57%; left: 45%; transform: rotate(5deg); }
+        .polaroid:nth-child(11) { top: 67%; left: 20%; transform: rotate(-5deg); }
+        .polaroid:nth-child(12) { top: 69%; left: 60%; transform: rotate(3deg); }
+        .polaroid:nth-child(13) { top: 79%; left: 8%; transform: rotate(-4deg); }
+        .polaroid:nth-child(14) { top: 81%; left: 50%; transform: rotate(6deg); }
+        .polaroid:nth-child(15) { top: 91%; left: 28%; transform: rotate(-3deg); }
+        .polaroid:nth-child(16) { top: 93%; left: 68%; transform: rotate(4deg); }
+        .polaroid:nth-child(17) { top: 103%; left: 12%; transform: rotate(-6deg); }
+        .polaroid:nth-child(18) { top: 105%; left: 52%; transform: rotate(3deg); }
+        .polaroid:nth-child(19) { top: 115%; left: 32%; transform: rotate(-4deg); }
+        .polaroid:nth-child(20) { top: 117%; left: 72%; transform: rotate(5deg); }
+        .polaroid:nth-child(21) { top: 127%; left: 15%; transform: rotate(-3deg); }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 3rem; }
+            .hero p { font-size: 1.2rem; }
+            .polaroid img { width: 180px; height: 180px; }
+            .modal-header h2 { font-size: 1.4rem; }
+            .modal-gallery { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+            .modal-gallery .gallery-item img { height: 180px; }
+        }
+    </style>
 </head>
 <body>
+    <section class="hero">
+        <h1>Graduación Kindergarten</h1>
+        <p>Un viaje a través de los mejores momentos de esta etapa tan especial</p>
+        <div class="scroll-indicator">↓</div>
+    </section>
 
-<div id="app">
+    <section class="polaroids-container" id="polaroidsContainer"></section>
 
-  <header>
-    <div class="stat stat-score">
-      <span class="icon">🏆</span>
-      <span class="value" id="scoreDisplay">0</span>
+    <section class="section-title">
+        <h2>Felicitaciones Graduados</h2>
+    </section>
+
+    <section class="footer">
+        <h2>Fin de una Gran Aventura</h2>
+        <p>Que estos recuerdos sean el comienzo de muchos más logros por venir. ¡Felicidades!</p>
+    </section>
+
+    <!-- MODAL CÓDIGO -->
+    <div class="modal-codigo-overlay" id="modalCodigo">
+        <button class="modal-codigo-close" id="modalCodigoClose">✕</button>
+        <div class="modal-codigo-box">
+            <h2>📷 Ingresa tu código</h2>
+            <p>Digita el código que recibiste para ver tus fotos</p>
+            <input type="text" id="codigoInput" placeholder="Ej: ck01" maxlength="4" autocomplete="off">
+            <button class="btn-enviar" id="btnCodigoEnviar">Ver galería</button>
+            <p class="error" id="codigoError">Código no encontrado. Intenta de nuevo.</p>
+        </div>
     </div>
-    <div class="stat stat-level">
-      <span class="icon">📊</span>
-      <span class="value" id="levelDisplay">1</span>
+
+    <!-- MODAL GALERÍA -->
+    <div class="modal-overlay" id="modalGaleria">
+        <div class="modal-header">
+            <h2 id="modalTitle">Galería</h2>
+            <div class="modal-header-right">
+                <button class="modal-close" id="modalClose">✕</button>
+            </div>
+        </div>
+
+        <div class="selection-bar" id="selectionBar">
+            <span class="selection-count" id="selectionCount">0 fotos seleccionadas</span>
+            <div style="display:flex; gap:0.5rem;">
+                <button class="btn-send-email" id="btnSendEmail" disabled>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+                    Enviar por correo para imprimir
+                </button>
+                <button class="btn-clear" id="btnClear">Limpiar</button>
+            </div>
+        </div>
+
+        <div class="modal-gallery" id="modalGallery"></div>
+        <div class="modal-empty" id="modalEmpty" style="display:none;">
+            <p>📸 Próximamente disponibles</p>
+        </div>
     </div>
-    <div class="stat stat-level-name">
-      <span class="value" id="levelNameDisplay" style="font-size:12px;font-weight:500;color:rgba(255,255,255,0.6);">Principiante</span>
+
+    <!-- LIGHTBOX -->
+    <div class="lightbox" id="lightbox">
+        <button class="lightbox-close" id="lightboxClose">✕</button>
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev">‹</button>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext">›</button>
+        <img id="lightboxImg" src="" alt="">
     </div>
-    <div class="stat stat-lives">
-      <span class="value" id="livesDisplay">❤️❤️❤️</span>
-    </div>
-    <button class="sb-btn" id="sbToggle" title="Puntuaciones">🏅</button>
-    <button class="sb-btn" id="configToggle" title="Configurar scoreboard global">⚙️</button>
-  </header>
 
-  <div class="level-bar-wrap">
-    <div class="level-bar" id="levelBar"></div>
-  </div>
-
-  <div class="prompt-label">Presiona esta combinación</div>
-
-  <div id="comboDisplay">
-    <span class="keycap mod">Ctrl</span>
-    <span class="keycap sep">+</span>
-    <span class="keycap main">C</span>
-  </div>
-
-  <div id="feedback">
-    <span class="fb-waiting">Esperando tu presión...</span>
-  </div>
-
-  <div class="progress-wrap">
-    <div class="progress-dots" id="progressDots"></div>
-    <div class="progress-text">
-      Progreso: <strong id="progressCurrent">0</strong> / <strong id="progressTarget">5</strong> para subir de nivel
-    </div>
-  </div>
-
-  <div class="legend">
-    <span>🔵 <span class="lk">Ctrl</span> Control</span>
-    <span>🟡 <span class="lk">Mayús</span> Mayúsculas (Shift)</span>
-    <span>🟢 <span class="lk">Alt</span> Alt</span>
-    <span>🩷 <span class="lk altgr-lk">AltGr</span> AltGr</span>
-    <span id="layoutName" style="margin-left:4px;font-size:11px;color:rgba(255,255,255,0.25);">Español</span>
-  </div>
-
-  <!-- Overlay (start / game over) -->
-  <div id="overlay">
-    <h1 id="overlayTitle">Keyboard Combos</h1>
-    <div class="sub" id="overlaySub">
-      Aprende combinaciones de teclado mientras ganas puntos y subes de nivel.<br>
-      Presiona los modificadores y luego la tecla principal.
-    </div>
-    <div class="final-score" id="overlayScore" style="display:none;"></div>
-    <div class="final-level" id="overlayLevel" style="display:none;"></div>
-    <div class="final-stats" id="overlayStats" style="display:none;">
-      <div><div class="num" id="finalCorrect">0</div><div class="lbl">Correctas</div></div>
-      <div><div class="num" id="finalStreak">0</div><div class="lbl">Mejor racha</div></div>
-      <div><div class="num" id="finalWrong">0</div><div class="lbl">Fallos</div></div>
-    </div>
-    <div class="name-input-wrap hidden" id="nameInputWrap">
-      <input class="name-input" id="nameInput" placeholder="Tu nombre" maxlength="20" autocomplete="off">
-      <button class="btn-save-score" id="saveScoreBtn">💾 Guardar</button>
-    </div>
-    <div id="saveMsg" style="font-size:13px;color:#4ade80;font-weight:600;min-height:20px;margin-top:2px;"></div>
-    <button class="btn" id="overlayBtn">Comenzar</button>
-  </div>
-
-  <!-- Scoreboard overlay -->
-  <div id="scoreboardOverlay" class="hidden">
-    <div class="sb-header">
-      <h2>🏆 Puntuaciones</h2>
-      <button class="sb-close" id="sbClose">✕</button>
-    </div>
-    <div class="sb-table-wrap" id="sbTableWrap">
-      <div class="sb-loading" id="sbLoading">Cargando puntuaciones...</div>
-    </div>
-  </div>
-
-  <!-- Config overlay -->
-  <div id="configOverlay" class="hidden">
-    <div class="sb-header">
-      <h2 style="font-size:18px;">⚙️ Configurar scoreboard</h2>
-      <button class="sb-close" id="configClose">✕</button>
-    </div>
-    <div style="padding:8px 4px;">
-      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:12px;line-height:1.5;">
-        Pega aquí el <strong>GitHub Personal Access Token</strong> con permiso <strong>Gist</strong>
-        para que las puntuaciones se guarden globalmente.<br><br>
-        Sin token, cada jugador guarda en su navegador.
-      </p>
-      <input class="token-input" id="tokenInput" placeholder="github_pat_..." autocomplete="off" spellcheck="false">
-      <button class="btn-save-score" id="saveTokenBtn" style="margin-top:8px;">💾 Guardar token</button>
-      <div id="tokenMsg" style="font-size:13px;min-height:20px;margin-top:6px;"></div>
-      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:16px 0;">
-      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:8px;">Layout del teclado:</p>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="layoutBtns"></div>
-      <div id="layoutMsg" style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:6px;"></div>
-    </div>
-  </div>
-
-</div>
-
-<script>
-(function() {
-  'use strict';
-
-  // ─── DOM refs ───
-  const $ = id => document.getElementById(id);
-  const scoreDisplay = $('scoreDisplay');
-  const levelDisplay = $('levelDisplay');
-  const levelNameDisplay = $('levelNameDisplay');
-  const livesDisplay = $('livesDisplay');
-  const levelBar = $('levelBar');
-  const comboDisplay = $('comboDisplay');
-  const feedback = $('feedback');
-  const progressDots = $('progressDots');
-  const progressCurrent = $('progressCurrent');
-  const progressTarget = $('progressTarget');
-  const overlay = $('overlay');
-  const overlayTitle = $('overlayTitle');
-  const overlaySub = $('overlaySub');
-  const overlayScore = $('overlayScore');
-  const overlayLevel = $('overlayLevel');
-  const overlayStats = $('overlayStats');
-  const finalCorrect = $('finalCorrect');
-  const finalStreak = $('finalStreak');
-  const finalWrong = $('finalWrong');
-  const overlayBtn = $('overlayBtn');
-  const nameInputWrap = $('nameInputWrap');
-  const nameInput = $('nameInput');
-  const saveScoreBtn = $('saveScoreBtn');
-  const saveMsg = $('saveMsg');
-  const sbOverlay = $('scoreboardOverlay');
-  const sbToggle = $('sbToggle');
-  const sbClose = $('sbClose');
-  const sbTableWrap = $('sbTableWrap');
-  const sbLoading = $('sbLoading');
-  const configOverlay = $('configOverlay');
-  const configToggle = $('configToggle');
-  const configClose = $('configClose');
-  const tokenInput = $('tokenInput');
-  const saveTokenBtn = $('saveTokenBtn');
-  const tokenMsg = $('tokenMsg');
-
-  // ─── GitHub Gist scoreboard config ───
-  const CFG_GIST_ID = '7bb744a5de9335d04d307560f4c9bb27';
-  function getGistToken() { return localStorage.getItem('kc_gist_token') || ''; }
-  function setGistToken(v) { localStorage.setItem('kc_gist_token', v); }
-
-  // ─── Game state ───
-  const state = {
-    score: 0,
-    level: 1,
-    levelProgress: 0,
-    levelTarget: 5,
-    lives: 3,
-    maxLives: 3,
-    streak: 0,
-    bestStreak: 0,
-    correct: 0,
-    wrong: 0,
-    currentCombo: null,
-    waitingForNext: false,
-    running: false,
-  };
-
-  // ─── Level configs ───
-  const LEVELS = [
-    { name: 'Principiante', target: 6, types: ['ctrl_letter', 'shift_letter'] },
-    { name: 'Intermedio',   target: 8, types: ['shift_number', 'ctrl_number'] },
-    { name: 'Avanzado',     target: 8, types: ['ctrl_shift_letter', 'ctrl_shift_number'] },
-    { name: 'Experto',      target: 10, types: ['ctrl_alt_letter', 'shift_alt_letter', 'ctrl_alt_number'] },
-    { name: 'Maestro',      target: 10, types: ['ctrl_shift_alt_letter', 'ctrl_shift_number', 'shift_alt_number'] },
-    { name: 'Leyenda',      target: 12, types: ['all', 'triple_number', 'ctrl_alt_shift_number'] },
-  ];
-
-  const LEVEL_NAMES = LEVELS.map(l => l.name);
-  const MAX_LEVEL = LEVELS.length;
-
-  // ─── Combo generation ───
-
-  const CTRL_SKIP = new Set(['T', 'W', 'N', 'R', 'S', 'P', 'O', 'H', 'J', 'D', 'F', 'G', 'L', 'U', 'I', 'Q']);
-  const NUMBERS = ['0','1','2','3','4','5','6','7','8','9'];
-
-  const LAYOUT_DATA = {
-    es: {
-      name: 'Español',
-      letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZÑ'.split(''),
-      shiftSymbols: { '1':'!','2':'"','3':'·','4':'$','5':'%','6':'&','7':'/','8':'(','9':')','0':'=' },
-      altgrSymbols: { '2':'@','3':'#','5':'€','6':'¬' },
-      extraCodes: { 'Ñ': 'Semicolon' },
-    },
-    us: {
-      name: 'English (US)',
-      letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
-      shiftSymbols: { '1':'!','2':'@','3':'#','4':'$','5':'%','6':'^','7':'&','8':'*','9':'(','0':')' },
-      altgrSymbols: {},
-      extraCodes: {},
-    }
-  };
-
-  let LAYOUT = LAYOUT_DATA.es;
-
-  function getLetters() { return LAYOUT.letters; }
-  function getAllowedLetters() { return LAYOUT.letters.filter(l => !CTRL_SKIP.has(l)); }
-  function letterToCode(letter) { return LAYOUT.extraCodes[letter] || `Key${letter}`; }
-
-  async function detectLayout() {
-    try {
-      const map = await navigator.keyboard.getLayoutMap();
-      const k = map.get('Semicolon');
-      if (k === 'ñ') return 'es';
-      if (k === 'ç') return 'es';
-    } catch(e) {}
-    try {
-      const k = await navigator.keyboard.getLayoutMap();
-      if (k.get('KeyZ') === 'z' && k.get('Semicolon') === ';') return 'us';
-    } catch(e) {}
-    return null;
-  }
-
-  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-  function makeCombo(mods, code, displayParts, pts, expectedKey) {
-    const c = { mods, code, displayParts, pts };
-    if (expectedKey) c.expectedKey = expectedKey;
-    return c;
-  }
-
-  function generateCombo(types) {
-    const type = pick(types);
-
-    switch (type) {
-      case 'ctrl_letter': {
-        const letter = pick(getAllowedLetters());
-        return makeCombo(
-          { ctrl: true, shift: false, alt: false },
-          letterToCode(letter),
-          ['Ctrl', '+', letter],
-          10
-        );
-      }
-      case 'shift_letter': {
-        const letter = pick(getLetters());
-        return makeCombo(
-          { ctrl: false, shift: true, alt: false },
-          letterToCode(letter),
-          ['Mayús', '+', letter],
-          10
-        );
-      }
-      case 'ctrl_number': {
-        const num = pick(NUMBERS);
-        return makeCombo(
-          { ctrl: true, shift: false, alt: false },
-          `Digit${num}`,
-          ['Ctrl', '+', num],
-          15
-        );
-      }
-      case 'shift_number': {
-        const num = pick(NUMBERS);
-        return makeCombo(
-          { ctrl: false, shift: true, alt: false },
-          `Digit${num}`,
-          ['Mayús', '+', LAYOUT.shiftSymbols[num]],
-          15
-        );
-      }
-      case 'ctrl_shift_letter': {
-        const letter = pick(getAllowedLetters());
-        return makeCombo(
-          { ctrl: true, shift: true, alt: false },
-          letterToCode(letter),
-          ['Ctrl', '+', 'Mayús', '+', letter],
-          20
-        );
-      }
-      case 'ctrl_shift_number': {
-        const num = pick(NUMBERS);
-        return makeCombo(
-          { ctrl: true, shift: true, alt: false },
-          `Digit${num}`,
-          ['Ctrl', '+', 'Mayús', '+', num],
-          25
-        );
-      }
-      case 'ctrl_alt_letter': {
-        const letter = pick(getAllowedLetters());
-        return makeCombo(
-          { ctrl: true, shift: false, alt: true },
-          letterToCode(letter),
-          ['AltGr', '+', letter],
-          25
-        );
-      }
-      case 'ctrl_alt_number': {
-        const num = pick(NUMBERS);
-        const sym = LAYOUT.altgrSymbols[num];
-        if (sym) {
-          return makeCombo(
-            { ctrl: true, shift: false, alt: true },
-            null,
-            ['AltGr', '+', sym],
-            30,
-            sym
-          );
-        }
-        return makeCombo(
-          { ctrl: true, shift: false, alt: true },
-          `Digit${num}`,
-          ['AltGr', '+', num],
-          30
-        );
-      }
-      case 'shift_alt_letter': {
-        const letter = pick(getLetters());
-        return makeCombo(
-          { ctrl: false, shift: true, alt: true },
-          letterToCode(letter),
-          ['Mayús', '+', 'Alt', '+', letter],
-          25
-        );
-      }
-      case 'shift_alt_number': {
-        const num = pick(NUMBERS);
-        return makeCombo(
-          { ctrl: false, shift: true, alt: true },
-          `Digit${num}`,
-          ['Mayús', '+', 'Alt', '+', LAYOUT.shiftSymbols[num]],
-          30
-        );
-      }
-      case 'ctrl_shift_alt_letter': {
-        const letter = pick(getAllowedLetters());
-        return makeCombo(
-          { ctrl: true, shift: true, alt: true },
-          letterToCode(letter),
-          ['Ctrl', '+', 'Mayús', '+', 'Alt', '+', letter],
-          35
-        );
-      }
-      case 'triple_number': {
-        const num = pick(NUMBERS);
-        const modType = pick(['ctrl_shift', 'ctrl_alt', 'shift_alt']);
-        const mods = { ctrl: modType.includes('ctrl'), shift: modType.includes('shift'), alt: modType.includes('alt') };
-        let display, code, expectedKey;
-        if (modType === 'ctrl_shift') {
-          display = ['Ctrl', '+', 'Mayús', '+', num];
-          code = `Digit${num}`;
-        } else if (modType === 'ctrl_alt') {
-          const sym = LAYOUT.altgrSymbols[num];
-          if (sym) {
-            display = ['AltGr', '+', sym];
-            code = null;
-            expectedKey = sym;
-          } else {
-            display = ['AltGr', '+', num];
-            code = `Digit${num}`;
-          }
-        } else {
-          display = ['Mayús', '+', 'Alt', '+', LAYOUT.shiftSymbols[num]];
-          code = `Digit${num}`;
-        }
-        return makeCombo(mods, code, display, 30, expectedKey);
-      }
-      case 'ctrl_alt_shift_number': {
-        const num = pick(NUMBERS);
-        const sym = LAYOUT.altgrSymbols[num];
-        if (sym) {
-          return makeCombo(
-            { ctrl: true, shift: true, alt: true },
-            null,
-            ['Ctrl', '+', 'Mayús', '+', 'Alt', '+', sym],
-            40,
-            sym
-          );
-        }
-        return makeCombo(
-          { ctrl: true, shift: true, alt: true },
-          `Digit${num}`,
-          ['Ctrl', '+', 'Mayús', '+', 'Alt', '+', num],
-          40
-        );
-      }
-      case 'all': {
-        const allTypes = ['ctrl_letter', 'shift_letter', 'ctrl_number', 'shift_number',
-                          'ctrl_shift_letter', 'ctrl_shift_number', 'ctrl_alt_letter',
-                          'shift_alt_letter'];
-        return generateCombo(allTypes);
-      }
-      default:
-        return generateCombo(['ctrl_letter']);
-    }
-  }
-
-  // ─── Rendering ───
-
-  function renderCombo(combo) {
-    comboDisplay.innerHTML = '';
-    const parts = combo.displayParts;
-    for (let i = 0; i < parts.length; i++) {
-      const p = parts[i];
-      const el = document.createElement('span');
-      el.className = 'keycap';
-      if (p === '+') {
-        el.className = 'keycap sep';
-      } else if (p === 'Ctrl' || p === 'Mayús' || p === 'Alt') {
-        el.className = 'keycap mod';
-      } else if (p === 'AltGr') {
-        el.className = 'keycap altgr';
-      } else {
-        el.className = 'keycap main';
-      }
-      el.textContent = p;
-      comboDisplay.appendChild(el);
-    }
-  }
-
-  function renderProgress() {
-    const target = state.levelTarget;
-    const done = state.levelProgress;
-    progressDots.innerHTML = '';
-    for (let i = 0; i < target; i++) {
-      const dot = document.createElement('span');
-      dot.className = 'dot';
-      if (i < done) dot.classList.add('done');
-      else if (i === done) dot.classList.add('current');
-      progressDots.appendChild(dot);
-    }
-    progressCurrent.textContent = done;
-    progressTarget.textContent = target;
-    const pct = Math.min(100, (done / target) * 100);
-    levelBar.style.width = pct + '%';
-  }
-
-  function renderStats() {
-    scoreDisplay.textContent = state.score;
-    levelDisplay.textContent = state.level;
-    levelNameDisplay.textContent = LEVEL_NAMES[Math.min(state.level - 1, LEVEL_NAMES.length - 1)];
-    let hearts = '';
-    for (let i = 0; i < state.maxLives; i++) {
-      hearts += i < state.lives ? '❤️' : '🖤';
-    }
-    livesDisplay.textContent = hearts;
-  }
-
-  function setFeedback(html, className) {
-    feedback.innerHTML = html;
-    feedback.firstChild && (feedback.firstChild.className = className || 'fb-waiting');
-  }
-
-  function showFeedbackCorrect(pts) {
-    let html = `<span class="fb-correct">✅ ¡Correcto! +${pts} pts</span>`;
-    if (state.streak >= 3) {
-      const fire = state.streak >= 5 ? '🔥'.repeat(Math.min(state.streak - 2, 8)) : '🔥';
-      html += `<span class="fb-streak">${fire} Racha: ${state.streak}</span>`;
-    } else if (state.streak >= 2) {
-      html += `<span class="fb-streak">✨ Racha: ${state.streak}</span>`;
-    }
-    setFeedback(html, 'fb-correct');
-  }
-
-  function showFeedbackWrong(expected) {
-    setFeedback(
-      `<span class="fb-wrong">❌ ¡Fallaste! Era: ${expected}</span>`,
-      'fb-wrong'
-    );
-  }
-
-  function showFeedbackWaiting() {
-    setFeedback('<span class="fb-waiting">Esperando tu presión...</span>', 'fb-waiting');
-  }
-
-  function showFeedbackLevelUp() {
-    setFeedback(`<span class="fb-levelup">🎉 ¡Nuevo nivel: ${LEVEL_NAMES[Math.min(state.level - 1, LEVEL_NAMES.length - 1)]}!</span>`, 'fb-levelup');
-  }
-
-  // ─── Game logic ───
-
-  function getLevelConfig() {
-    const idx = Math.min(state.level - 1, LEVELS.length - 1);
-    return LEVELS[idx];
-  }
-
-  function getCombosForLevel() {
-    const cfg = getLevelConfig();
-    return generateCombo(cfg.types);
-  }
-
-  function nextCombo() {
-    state.currentCombo = getCombosForLevel();
-    renderCombo(state.currentCombo);
-    state.waitingForNext = false;
-    showFeedbackWaiting();
-  }
-
-  function handleCorrect(e) {
-    if (state.waitingForNext || !state.running) return;
-
-    const combo = state.currentCombo;
-    state.correct++;
-    state.streak++;
-    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
-
-    const streakBonus = Math.max(0, Math.floor((state.streak - 1) / 3)) * 5;
-    const totalPts = combo.pts + streakBonus;
-    state.score += totalPts;
-    state.levelProgress++;
-
-    showFeedbackCorrect(totalPts);
-    renderStats();
-
-    // Check level up
-    if (state.levelProgress >= state.levelTarget) {
-      state.levelProgress = 0;
-      if (state.level < MAX_LEVEL) {
-        state.level++;
-        state.levelTarget = getLevelConfig().target;
-        showFeedbackLevelUp();
-      } else {
-        // Max level - keep going
-        state.levelTarget = getLevelConfig().target;
-      }
-    }
-
-    renderProgress();
-    renderStats();
-
-    state.waitingForNext = true;
-    setTimeout(() => nextCombo(), 600);
-  }
-
-  function handleWrong(e) {
-    if (state.waitingForNext || !state.running) return;
-
-    state.wrong++;
-    state.streak = 0;
-    state.lives--;
-
-    const displayStr = state.currentCombo.displayParts.join(' ');
-    showFeedbackWrong(displayStr);
-    renderStats();
-
-    if (state.lives <= 0) {
-      gameOver();
-      return;
-    }
-
-    state.waitingForNext = true;
-    setTimeout(() => nextCombo(), 1000);
-  }
-
-  function checkCombo(e) {
-    if (state.waitingForNext || !state.running || !state.currentCombo) return;
-
-    const combo = state.currentCombo;
-    const mods = combo.mods;
-
-    // Ignore modifier-only presses and F-keys, arrows, etc.
-    if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Meta' ||
-        e.key === 'AltGraph' || e.key === 'CapsLock' || e.key === 'Tab' ||
-        e.key === 'Escape' || e.key.startsWith('F') || e.key.startsWith('Arrow') ||
-        e.key === 'Home' || e.key === 'End' || e.key === 'PageUp' || e.key === 'PageDown' ||
-        e.key === 'Insert' || e.key === 'Delete') {
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Check modifiers
-    const ctrlMatch = e.ctrlKey === mods.ctrl;
-    const shiftMatch = e.shiftKey === mods.shift;
-    const altMatch = e.altKey === mods.alt;
-    const metaCheck = !e.metaKey; // meta should NOT be pressed
-
-    let keyMatch;
-    if (combo.expectedKey) {
-      keyMatch = e.key === combo.expectedKey;
-    } else if (combo.code) {
-      keyMatch = e.code === combo.code;
-    } else {
-      keyMatch = false;
-    }
-
-    if (ctrlMatch && shiftMatch && altMatch && metaCheck && keyMatch) {
-      handleCorrect(e);
-    } else {
-      handleWrong(e);
-    }
-  }
-
-  function handleKeyUp(e) {
-    // not needed for detection
-  }
-
-  // ─── Scoreboard (GitHub Gist + localStorage) ───
-
-  function getLocalScores() {
-    try { return JSON.parse(localStorage.getItem('kc_scores') || '[]'); } catch { return []; }
-  }
-
-  function setLocalScores(scores) {
-    localStorage.setItem('kc_scores', JSON.stringify(scores));
-  }
-
-  async function loadScores() {
-    if (CFG_GIST_ID) {
-      try {
-        const res = await fetch(`https://api.github.com/gists/${CFG_GIST_ID}`);
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-        const content = data.files && data.files['scores-init.json'] && data.files['scores-init.json'].content;
-        if (content) {
-          const parsed = JSON.parse(content);
-          const scores = parsed.scores || [];
-          setLocalScores(scores);
-          return scores;
-        }
-      } catch (e) {
-        console.warn('Gist load failed, using local:', e.message);
-      }
-    }
-    return getLocalScores();
-  }
-
-  async function saveScore(name, score, level, correct) {
-    const entry = { name, score, level, correct, date: new Date().toISOString().slice(0, 10) };
-    let scores = getLocalScores();
-    scores.push(entry);
-    scores.sort((a, b) => b.score - a.score);
-    scores = scores.slice(0, 100);
-    setLocalScores(scores);
-
-    const token = getGistToken();
-    if (CFG_GIST_ID && token) {
-      try {
-        const res = await fetch(`https://api.github.com/gists/${CFG_GIST_ID}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/vnd.github.v3+json'
-          },
-          body: JSON.stringify({
-            files: {
-              'scores-init.json': {
-                content: JSON.stringify({ scores })
-              }
-            }
-          })
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="datos.js"></script>
+
+    <script>
+        gsap.registerPlugin(ScrollTrigger);
+
+        const BASE_PORTADAS = "fotos-graduacion/";
+        const BASE_GALERIA = "galeria/";
+
+        // ============ GENERAR POLAROIDS ============
+        const container = document.getElementById('polaroidsContainer');
+        let ninoActual = null;
+
+        ninos.forEach((nino, i) => {
+            const div = document.createElement('div');
+            div.className = 'polaroid';
+            div.innerHTML = `
+                <img src="${BASE_PORTADAS}${portadas[i]}" alt="Graduación ${nino.id}">
+                <div class="caption">${captions[i]}</div>
+            `;
+            div.addEventListener('click', () => pedirCodigo(nino));
+            container.appendChild(div);
         });
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-      } catch (e) {
-        console.warn('Gist save failed, saved locally:', e.message);
-      }
-    }
-    return scores;
-  }
 
-  function formatDate(d) {
-    const parts = d.split('-');
-    return parts[2] + '/' + parts[1] + '/' + parts[0];
-  }
+        // ============ ANIMACIONES SCROLL ============
+        function animatePolaroid(polaroid) {
+            gsap.from(polaroid, {
+                scrollTrigger: { trigger: polaroid, start: "top 95%", end: "top 60%", scrub: 1 },
+                opacity: 0, scale: 0.1, rotation: gsap.utils.random(-60, 60)
+            });
+            gsap.to(polaroid, {
+                scrollTrigger: { trigger: '.polaroids-container', start: "top bottom", end: "bottom top", scrub: true },
+                y: gsap.utils.random(-200, 200), rotation: gsap.utils.random(-25, 25), ease: "none"
+            });
+            gsap.to(polaroid, {
+                scrollTrigger: { trigger: polaroid, start: "top 50%", end: "bottom 50%", scrub: true },
+                scale: 1.15, ease: "power2.inOut"
+            });
+        }
 
-  async function renderScoreboard() {
-    sbLoading.textContent = 'Cargando puntuaciones...';
-    sbLoading.style.display = 'block';
-    sbTableWrap.querySelector('.sb-table')?.remove();
-    sbTableWrap.querySelector('.sb-empty')?.remove();
+        gsap.utils.toArray('.polaroid').forEach(p => animatePolaroid(p));
+        gsap.to('.scroll-indicator', { scrollTrigger: { trigger: '.hero', start: "top top", end: "bottom top", scrub: true }, opacity: 0, y: -50 });
+        gsap.from('.hero h1', { scrollTrigger: { trigger: '.hero', start: "top top", end: "bottom top", scrub: true }, y: -200, opacity: 0, scale: 0.7 });
+        gsap.from('.hero p', { scrollTrigger: { trigger: '.hero', start: "top top", end: "bottom top", scrub: true }, y: -100, opacity: 0 });
+        gsap.from('.section-title h2', { scrollTrigger: { trigger: '.section-title', start: "top 80%", end: "bottom 20%", scrub: 1 }, scale: 0.3, opacity: 0, rotation: 15 });
+        gsap.from('.footer h2', { scrollTrigger: { trigger: '.footer', start: "top 80%", end: "bottom 20%", scrub: 1 }, y: 100, opacity: 0, scale: 0.8 });
+        gsap.from('.footer p', { scrollTrigger: { trigger: '.footer', start: "top 80%", end: "bottom 20%", scrub: 1 }, y: 60, opacity: 0, delay: 0.4 });
+        ScrollTrigger.normalizeScroll(true);
 
-    let scores;
-    try {
-      scores = await loadScores();
-    } catch {
-      scores = getLocalScores();
-    }
+        // ============ MODAL CÓDIGO ============
+        const modalCodigo = document.getElementById('modalCodigo');
+        const codigoInput = document.getElementById('codigoInput');
+        const codigoError = document.getElementById('codigoError');
+        const btnCodigoEnviar = document.getElementById('btnCodigoEnviar');
+        const modalCodigoClose = document.getElementById('modalCodigoClose');
 
-    sbLoading.style.display = 'none';
+        function pedirCodigo(nino) {
+            ninoActual = nino;
+            codigoInput.value = '';
+            codigoError.style.display = 'none';
+            modalCodigo.classList.add('active');
+            setTimeout(() => codigoInput.focus(), 300);
+        }
 
-    if (!scores || scores.length === 0) {
-      const empty = document.createElement('div');
-      empty.className = 'sb-empty';
-      empty.innerHTML = '<span class="icon">🏅</span><span class="txt">Aún no hay puntuaciones.<br>¡Sé el primero en jugar!</span>';
-      sbTableWrap.appendChild(empty);
-      return;
-    }
+        function verificarCodigo() {
+            const codigo = codigoInput.value.trim().toLowerCase();
+            if (codigo === ninoActual.codigo) {
+                modalCodigo.classList.remove('active');
+                abrirGaleria(ninoActual);
+            } else {
+                codigoError.style.display = 'block';
+                codigoInput.value = '';
+                codigoInput.focus();
+            }
+        }
 
-    const table = document.createElement('table');
-    table.className = 'sb-table';
-    table.innerHTML = '<thead><tr><th class="rank">#</th><th class="name">Nombre</th><th class="sc">Puntos</th><th class="lvl">Nivel</th><th class="dt">Fecha</th></tr></thead>';
-    const tbody = document.createElement('tbody');
+        btnCodigoEnviar.addEventListener('click', verificarCodigo);
+        codigoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') verificarCodigo(); });
+        modalCodigoClose.addEventListener('click', () => modalCodigo.classList.remove('active'));
 
-    const myName = (localStorage.getItem('kc_player_name') || '').toLowerCase();
+        // ============ GALERÍA MODAL ============
+        const modal = document.getElementById('modalGaleria');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalGallery = document.getElementById('modalGallery');
+        const modalEmpty = document.getElementById('modalEmpty');
+        const modalClose = document.getElementById('modalClose');
+        const selectionBar = document.getElementById('selectionBar');
+        const selectionCount = document.getElementById('selectionCount');
+        const btnSendEmail = document.getElementById('btnSendEmail');
+        const btnClear = document.getElementById('btnClear');
 
-    scores.forEach((s, i) => {
-      const tr = document.createElement('tr');
-      if (i === 0) tr.classList.add('top1');
-      else if (i === 1) tr.classList.add('top2');
-      else if (i === 2) tr.classList.add('top3');
-      if (myName && s.name && s.name.toLowerCase() === myName) tr.classList.add('me');
+        let fotosSeleccionadas = [];
 
-      const rank = document.createElement('td');
-      rank.className = 'rank';
-      if (i === 0) rank.textContent = '🥇';
-      else if (i === 1) rank.textContent = '🥈';
-      else if (i === 2) rank.textContent = '🥉';
-      else rank.textContent = String(i + 1);
+        function abrirGaleria(nino) {
+            modalTitle.textContent = captions[nino.id - 1];
+            fotosSeleccionadas = [];
+            actualizarSeleccion();
 
-      const nameTd = document.createElement('td');
-      nameTd.className = 'name';
-      nameTd.textContent = s.name || 'Anónimo';
+            modalGallery.innerHTML = '';
+            if (nino.fotos.length > 0) {
+                modalGallery.style.display = 'grid';
+                modalEmpty.style.display = 'none';
+                selectionBar.classList.add('active');
 
-      const scoreTd = document.createElement('td');
-      scoreTd.className = 'sc';
-      scoreTd.textContent = s.score;
+                nino.fotos.forEach((foto, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'gallery-item';
+                    const nombreLimpio = foto.split('/').pop().replace('.JPG', '').replace('.jpg', '');
+                    item.innerHTML = `
+                        <div class="checkbox"></div>
+                        <img src="${BASE_GALERIA}${encodeURIComponent(foto)}" alt="Foto ${idx + 1}" loading="lazy">
+                        <div class="foto-name">${nombreLimpio}</div>
+                    `;
 
-      const levelTd = document.createElement('td');
-      levelTd.className = 'lvl';
-      levelTd.textContent = s.level || '-';
+                    // Click en checkbox = seleccionar
+                    item.querySelector('.checkbox').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleSeleccion(item, foto, nombreLimpio);
+                    });
 
-      const dateTd = document.createElement('td');
-      dateTd.className = 'dt';
-      dateTd.textContent = s.date ? formatDate(s.date) : '-';
+                    // Click en foto = lightbox
+                    item.addEventListener('click', () => abrirLightbox(nino.fotos, idx));
 
-      tr.appendChild(rank);
-      tr.appendChild(nameTd);
-      tr.appendChild(scoreTd);
-      tr.appendChild(levelTd);
-      tr.appendChild(dateTd);
-      tbody.appendChild(tr);
-    });
+                    modalGallery.appendChild(item);
+                });
+            } else {
+                modalGallery.style.display = 'none';
+                modalEmpty.style.display = 'block';
+                selectionBar.classList.remove('active');
+            }
 
-    table.appendChild(tbody);
-    sbTableWrap.appendChild(table);
-  }
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
 
-  function showScoreboard() {
-    sbOverlay.classList.remove('hidden');
-    renderScoreboard();
-  }
+        function toggleSeleccion(item, foto, nombre) {
+            const idx = fotosSeleccionadas.findIndex(f => f.foto === foto);
+            if (idx > -1) {
+                fotosSeleccionadas.splice(idx, 1);
+                item.classList.remove('selected');
+            } else {
+                fotosSeleccionadas.push({ foto, nombre });
+                item.classList.add('selected');
+            }
+            actualizarSeleccion();
+        }
 
-  function hideScoreboard() {
-    sbOverlay.classList.add('hidden');
-  }
+        function actualizarSeleccion() {
+            const count = fotosSeleccionadas.length;
+            selectionCount.textContent = count === 0 ? '0 fotos seleccionadas' : `${count} foto${count > 1 ? 's' : ''} seleccionada${count > 1 ? 's' : ''}`;
+            btnSendEmail.disabled = count === 0;
+        }
 
-  // ─── Start / Game Over ───
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
 
-  function startGame() {
-    state.score = 0;
-    state.level = 1;
-    state.levelProgress = 0;
-    state.levelTarget = LEVELS[0].target;
-    state.lives = 3;
-    state.streak = 0;
-    state.bestStreak = 0;
-    state.correct = 0;
-    state.wrong = 0;
-    state.currentCombo = null;
-    state.waitingForNext = false;
-    state.running = true;
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
 
-    overlay.classList.add('hidden');
-    renderStats();
-    nextCombo();
-    renderProgress();
-  }
+        // ============ ENVIAR POR CORREO ============
+        btnSendEmail.addEventListener('click', () => {
+            if (fotosSeleccionadas.length === 0) return;
 
-  function gameOver() {
-    state.running = false;
-    overlay.classList.remove('hidden');
-    overlayTitle.textContent = '💀 Game Over';
-    overlaySub.textContent = '¡Se te acabaron las vidas! Sigue practicando.';
-    overlayScore.style.display = 'block';
-    overlayScore.textContent = state.score;
-    overlayLevel.style.display = 'block';
-    overlayLevel.textContent = `Nivel ${state.level} - ${LEVEL_NAMES[Math.min(state.level - 1, LEVEL_NAMES.length - 1)]}`;
-    overlayStats.style.display = 'flex';
-    finalCorrect.textContent = state.correct;
-    finalStreak.textContent = state.bestStreak;
-    finalWrong.textContent = state.wrong;
+            const asunto = encodeURIComponent(`Hacer pedido de fotos para imprimir - ${captions[ninoActual.id - 1]}`);
+            const nombresFotos = fotosSeleccionadas.map(f => f.nombre).join('\n');
+            const body = encodeURIComponent(
+                `Hacer pedido de fotos para imprimir (una familiar va en el paquete)\n\nFotos seleccionadas:\n${nombresFotos}\n\nTotal: ${fotosSeleccionadas.length} foto(s)`
+            );
 
-    // Show name input if player has a score
-    if (state.score > 0) {
-      const savedName = (localStorage.getItem('kc_player_name') || '');
-      nameInput.value = savedName;
-      nameInputWrap.classList.remove('hidden');
-      saveMsg.textContent = '';
-      saveScoreBtn.disabled = false;
-      setTimeout(() => nameInput.focus(), 100);
-    } else {
-      nameInputWrap.classList.add('hidden');
-      saveMsg.textContent = '';
-    }
+            window.location.href = `mailto:?subject=${asunto}&body=${body}`;
+        });
 
-    overlayBtn.textContent = 'Reintentar';
-    overlayBtn.className = 'btn btn-restart';
-    overlayBtn.onclick = startGame;
-  }
+        // ============ LIMPIAR SELECCIÓN ============
+        btnClear.addEventListener('click', () => {
+            fotosSeleccionadas = [];
+            document.querySelectorAll('.gallery-item.selected').forEach(item => item.classList.remove('selected'));
+            actualizarSeleccion();
+        });
 
-  async function handleSaveScore() {
-    const name = nameInput.value.trim() || 'Anónimo';
-    saveScoreBtn.disabled = true;
-    saveMsg.textContent = '⏳ Guardando...';
-    try {
-      await saveScore(name, state.score, state.level, state.correct);
-      localStorage.setItem('kc_player_name', name);
-      saveMsg.textContent = '✅ ¡Puntuación guardada!';
-      nameInputWrap.classList.add('hidden');
-    } catch (e) {
-      saveMsg.textContent = '❌ Error al guardar';
-      saveScoreBtn.disabled = false;
-    }
-  }
+        // ============ LIGHTBOX ============
+        const lightbox = document.getElementById('lightbox');
+        const lightboxImg = document.getElementById('lightboxImg');
+        const lightboxClose = document.getElementById('lightboxClose');
+        const lightboxPrev = document.getElementById('lightboxPrev');
+        const lightboxNext = document.getElementById('lightboxNext');
+        let lightboxFotos = [];
+        let lightboxIdx = 0;
 
-  function showStart() {
-    overlay.classList.remove('hidden');
-    overlayTitle.textContent = '⌨️ Keyboard Combos';
-    overlaySub.innerHTML =
-      'Aprende combinaciones de teclado mientras ganas puntos y subes de nivel.<br><br>' +
-      'Presiona los modificadores <strong>Ctrl</strong>, <strong>Mayús</strong> y <strong>Alt</strong> ' +
-      'junto con otras teclas.<br><br>' +
-      'Cada nivel tiene combinaciones más difíciles. ¡3 vidas!';
-    overlayScore.style.display = 'none';
-    overlayLevel.style.display = 'none';
-    overlayStats.style.display = 'none';
-    nameInputWrap.classList.add('hidden');
-    saveMsg.textContent = '';
-    overlayBtn.textContent = 'Comenzar';
-    overlayBtn.className = 'btn';
-    overlayBtn.onclick = startGame;
-  }
+        function abrirLightbox(fotos, idx) {
+            lightboxFotos = fotos;
+            lightboxIdx = idx;
+            lightboxImg.src = `${BASE_GALERIA}${encodeURIComponent(fotos[idx])}`;
+            lightbox.classList.add('active');
+        }
 
-  // ─── Keyboard listener ───
+        lightboxClose.addEventListener('click', () => lightbox.classList.remove('active'));
+        lightbox.addEventListener('click', (e) => { if (e.target === lightbox) lightbox.classList.remove('active'); });
 
-  document.addEventListener('keydown', checkCombo);
+        lightboxPrev.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lightboxIdx = (lightboxIdx - 1 + lightboxFotos.length) % lightboxFotos.length;
+            lightboxImg.src = `${BASE_GALERIA}${encodeURIComponent(lightboxFotos[lightboxIdx])}`;
+        });
 
-  // ─── Scoreboard event listeners ───
+        lightboxNext.addEventListener('click', (e) => {
+            e.stopPropagation();
+            lightboxIdx = (lightboxIdx + 1) % lightboxFotos.length;
+            lightboxImg.src = `${BASE_GALERIA}${encodeURIComponent(lightboxFotos[lightboxIdx])}`;
+        });
 
-  sbToggle.addEventListener('click', showScoreboard);
-  sbClose.addEventListener('click', hideScoreboard);
-  function populateLayoutBtns() {
-    const container = document.getElementById('layoutBtns');
-    if (!container) return;
-    container.innerHTML = '';
-    Object.keys(LAYOUT_DATA).forEach(key => {
-      const btn = document.createElement('button');
-      btn.textContent = LAYOUT_DATA[key].name;
-      btn.style.cssText = 'font-family:Inter,sans-serif;font-weight:600;font-size:12px;padding:6px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:8px;background:' + (LAYOUT === LAYOUT_DATA[key] ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)') + ';color:#fff;cursor:pointer;transition:background 0.2s;';
-      btn.onmouseenter = () => { if (LAYOUT !== LAYOUT_DATA[key]) btn.style.background = 'rgba(255,255,255,0.08)'; };
-      btn.onmouseleave = () => { btn.style.background = LAYOUT === LAYOUT_DATA[key] ? 'rgba(99,102,241,0.25)' : 'rgba(255,255,255,0.04)'; };
-      btn.onclick = () => {
-        LAYOUT = LAYOUT_DATA[key];
-        populateLayoutBtns();
-        const el = document.getElementById('layoutName');
-        if (el) el.textContent = LAYOUT.name;
-        const msg = document.getElementById('layoutMsg');
-        if (msg) msg.textContent = '✅ Layout cambiado a ' + LAYOUT.name;
-        localStorage.setItem('kc_layout', key);
-      };
-      container.appendChild(btn);
-    });
-  }
+        document.addEventListener('keydown', (e) => {
+            if (!lightbox.classList.contains('active')) return;
+            if (e.key === 'Escape') lightbox.classList.remove('active');
+            if (e.key === 'ArrowLeft') lightboxPrev.click();
+            if (e.key === 'ArrowRight') lightboxNext.click();
+        });
 
-  configToggle.addEventListener('click', function() {
-    tokenInput.value = getGistToken();
-    tokenMsg.textContent = '';
-    populateLayoutBtns();
-    const msg = document.getElementById('layoutMsg');
-    if (msg) msg.textContent = '';
-    configOverlay.classList.remove('hidden');
-  });
-  configClose.addEventListener('click', function() { configOverlay.classList.add('hidden'); });
-  saveTokenBtn.addEventListener('click', function() {
-    const t = tokenInput.value.trim();
-    if (!t) { tokenMsg.textContent = '❌ Pega el token'; return; }
-    setGistToken(t);
-    tokenMsg.textContent = '✅ Token guardado en tu navegador';
-    setTimeout(() => configOverlay.classList.add('hidden'), 800);
-  });
-  saveScoreBtn.addEventListener('click', handleSaveScore);
-
-  nameInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') handleSaveScore();
-    e.stopPropagation();
-  });
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !sbOverlay.classList.contains('hidden')) {
-      hideScoreboard();
-      e.preventDefault();
-    }
-  });
-
-  // ─── Layout detection ───
-  async function init() {
-    const saved = localStorage.getItem('kc_layout');
-    if (saved && LAYOUT_DATA[saved]) {
-      LAYOUT = LAYOUT_DATA[saved];
-    } else {
-      const detected = await detectLayout();
-      if (detected && LAYOUT_DATA[detected]) LAYOUT = LAYOUT_DATA[detected];
-    }
-    const layoutNameEl = document.getElementById('layoutName');
-    if (layoutNameEl) layoutNameEl.textContent = LAYOUT.name;
-    showStart();
-    renderStats();
-    renderProgress();
-    state.currentCombo = makeCombo({ ctrl: true, shift: false, alt: false }, 'KeyC', ['Ctrl', '+', 'C'], 10);
-    renderCombo(state.currentCombo);
-  }
-
-  init();
-})();
-</script>
+        // ============ PARTÍCULAS ============
+        (function createParticles() {
+            const c = document.createElement('div');
+            c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1';
+            document.body.appendChild(c);
+            for (let i = 0; i < 40; i++) {
+                const p = document.createElement('div');
+                const size = Math.random() * 4 + 2;
+                p.style.cssText = `position:absolute;width:${size}px;height:${size}px;background:rgba(243,156,18,${Math.random()*0.4+0.1});border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%`;
+                c.appendChild(p);
+                gsap.to(p, { y: Math.random()*300-150, x: Math.random()*300-150, duration: Math.random()*15+15, repeat: -1, yoyo: true, ease: "sine.inOut" });
+            }
+        })();
+    </script>
 </body>
 </html>
