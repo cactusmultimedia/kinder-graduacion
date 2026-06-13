@@ -1,5 +1,3 @@
-const BASE_FOTOS = "../Downloads/imagenes/graduacion/kinder individuales/";
-
 const ninos = [
   {
     id: 1,
@@ -47,8 +45,8 @@ const captions = [
   "Primeros pasos", "Sonrisas de alegría", "Momentos especiales",
   "Amistades forjadas", "Aprendizajes", "Juegos y risas",
   "Celebraciones", "Logros alcanzados", "Recuerdos inolvidables",
-  "Crecimiento", "Sueños cumplieron", "Familia unida",
+  "Crecimiento", "Sueños cumplidos", "Familia unida",
   "Orgullo y alegría", "Nuevos comienzos", "El día más importante",
-  "Bachilleratos", "Felicidades", "Éxito total",
+  "Nueva etapa", "Felicidades", "Éxito total",
   "Gracias por todo", "Hasta siempre", "El futuro nos espera"
 ];
