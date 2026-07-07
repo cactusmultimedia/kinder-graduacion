@@ -725,7 +725,7 @@
         const container = document.getElementById('polaroidsContainer');
         let ninoActual = null;
 
-        const isMobile = () => window.innerWidth <= 768;
+        const isMobile = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const mobileWidth = () => window.innerWidth <= 480 ? 130 : 152;
         const mobileStep = () => window.innerWidth <= 480 ? 5 : 4.5;
 
@@ -798,9 +798,10 @@
             const w = window.innerWidth;
             let h;
             const n = totalNinos;
-            if (w <= 480) h = Math.max(650, n * 60) + 'vh';
-            else if (w <= 768) h = Math.max(550, n * 48) + 'vh';
-            else h = Math.max(400, n * 32) + 'vh';
+            if (isMobile()) {
+                if (w <= 480) h = Math.max(650, n * 60) + 'vh';
+                else h = Math.max(550, n * 48) + 'vh';
+            } else h = Math.max(400, n * 32) + 'vh';
             container.style.height = h;
             ScrollTrigger.refresh();
         }
