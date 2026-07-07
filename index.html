@@ -818,11 +818,9 @@
         // Ajustar altura del contenedor según pantalla
         function ajustarAlturaContainer() {
             const w = window.innerWidth;
-            const n = totalNinos;
-            let h;
-            if (w <= 480) h = Math.max(400, n * 33) + 'vh';
-            else if (w <= 768) h = Math.max(350, n * 26) + 'vh';
-            else h = Math.max(250, n * 19) + 'vh';
+            let h = '600vh';
+            if (w <= 480) h = '1100vh';
+            else if (w <= 768) h = '900vh';
             container.style.height = h;
             ScrollTrigger.refresh();
         }
