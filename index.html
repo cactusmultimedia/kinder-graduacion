@@ -727,7 +727,7 @@
                 div.style.left = `calc(50% - ${mobileWidth()}px)`;
             }
             div.innerHTML = `
-                <img src="${BASE_PORTADAS}${portadas[i]}" alt="Graduación ${nino.id}">
+                <img src="${BASE_PORTADAS}${portadas[i]}" alt="Graduación ${nino.id}" loading="lazy" decoding="async">
                 <div class="caption">${nino.caption}</div>
             `;
             div.addEventListener('click', () => pedirCodigo(nino));
@@ -747,7 +747,7 @@
             panDiv.style.transform = 'rotate(-1deg)';
         }
         panDiv.innerHTML = `
-            <img src="galeria/panoramika_k1.jpg" alt="Grupo Graduación 2026">
+            <img src="galeria/panoramika_k1.jpg" alt="Grupo Graduación 2026" loading="lazy" decoding="async">
             <div class="caption">Generación 2026</div>
         `;
         panDiv.addEventListener('click', () => {
@@ -762,9 +762,9 @@
         // Ajustar altura del contenedor según pantalla
         function ajustarAlturaContainer() {
             const w = window.innerWidth;
-            let h = '600vh';
-            if (w <= 480) h = '1100vh';
-            else if (w <= 768) h = '900vh';
+            let h = '400vh';
+            if (w <= 480) h = '700vh';
+            else if (w <= 768) h = '550vh';
             container.style.height = h;
             ScrollTrigger.refresh();
         }
@@ -948,16 +948,202 @@
             if (e.target === modal) cerrarModal();
         });
 
-        // ============ ENVIAR POR WHATSAPP ============
+        // ============ PAQUETES ============
+        const paquetes = [
+            { id: 'basico', nombre: 'Básico', precio: '$150', descripcion: '5 fotos impresas tamaño 4x6', incluye: ['5 fotos impresas', '1 foto digital por WhatsApp'] },
+            { id: 'premium', nombre: 'Premium', precio: '$280', descripcion: '10 fotos impresas + 1 familiar', incluye: ['10 fotos impresas', '1 foto familiar impresa', 'Todas las fotos digitales'] },
+            { id: 'completo', nombre: 'Completo', precio: '$400', descripcion: 'Todas las fotos + familiar + digital', incluye: ['Todas las fotos impresas', '1 foto familiar impresa', 'Todas las fotos digitales', 'Álbum digital'] }
+        ];
+
+        let paqueteSeleccionado = null;
+
+        // ============ MODAL PAQUETES ============
+        const modalPaquetesOverlay = document.createElement('div');
+        modalPaquetesOverlay.className = 'modal-codigo-overlay';
+        modalPaquetesOverlay.id = 'modalPaquetes';
+        modalPaquetesOverlay.innerHTML = `
+            <button class="modal-codigo-close" id="modalPaquetesClose">✕</button>
+            <div class="modal-codigo-box" style="max-width:500px;">
+                <h2>📦 Elige tu paquete</h2>
+                <p style="margin-bottom:1.5rem;">Selecciona el paquete de impresión</p>
+                <div id="paquetesList" style="display:flex;flex-direction:column;gap:0.8rem;margin-bottom:1.5rem;"></div>
+                <button class="btn-enviar" id="btnConfirmarPaquete" disabled style="background:linear-gradient(135deg,#27ae60,#219a52);">Confirmar y enviar por WhatsApp</button>
+                <p class="error" id="paqueteError" style="display:none;">Selecciona un paquete primero</p>
+            </div>
+        `;
+        document.body.appendChild(modalPaquetesOverlay);
+
+        const paquetesList = document.getElementById('paquetesList');
+        const btnConfirmarPaquete = document.getElementById('btnConfirmarPaquete');
+        const modalPaquetesClose = document.getElementById('modalPaquetesClose');
+
+        function mostrarPaquetes() {
+            paqueteSeleccionado = null;
+            btnConfirmarPaquete.disabled = true;
+            paquetesList.innerHTML = '';
+
+            paquetes.forEach(p => {
+                const card = document.createElement('div');
+                card.style.cssText = `
+                    display:flex;align-items:center;gap:1rem;padding:1rem;
+                    background:#f5f5f5;border-radius:12px;cursor:pointer;
+                    border:2px solid transparent;transition:all 0.3s;text-align:left;
+                `;
+                card.innerHTML = `
+                    <div style="flex:1;">
+                        <div style="font-weight:bold;font-size:1.1rem;color:#2c3e50;">${p.nombre}</div>
+                        <div style="font-size:0.85rem;color:#666;">${p.descripcion}</div>
+                        <ul style="margin-top:0.4rem;padding-left:1.2rem;font-size:0.8rem;color:#888;">
+                            ${p.incluye.map(i => `<li>${i}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div style="font-size:1.5rem;font-weight:bold;color:#27ae60;white-space:nowrap;">${p.precio}</div>
+                `;
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('#paquetesList > div').forEach(c => c.style.borderColor = 'transparent');
+                    card.style.borderColor = '#27ae60';
+                    paqueteSeleccionado = p;
+                    btnConfirmarPaquete.disabled = false;
+                });
+                paquetesList.appendChild(card);
+            });
+
+            modalPaquetesOverlay.classList.add('active');
+        }
+
+        // ============ ENVIAR POR WHATSAPP CON PAQUETE ============
         btnSendEmail.addEventListener('click', () => {
             if (fotosSeleccionadas.length === 0) return;
+            mostrarPaquetes();
+        });
+
+        btnConfirmarPaquete.addEventListener('click', () => {
+            if (!paqueteSeleccionado || fotosSeleccionadas.length === 0) return;
 
             const nombresFotos = fotosSeleccionadas.map(f => f.nombre).join('\n');
             const texto = encodeURIComponent(
-                `Pedido de fotos para imprimir - ${ninoActual.caption}\n\nFotos seleccionadas:\n${nombresFotos}\n\nTotal: ${fotosSeleccionadas.length} foto(s)`
+                `Pedido de fotos para imprimir - ${ninoActual.caption}\n\nPaquete: ${paqueteSeleccionado.nombre} (${paqueteSeleccionado.precio})\n\nFotos seleccionadas:\n${nombresFotos}\n\nTotal: ${fotosSeleccionadas.length} foto(s)`
             );
 
+            // Guardar pedido en localStorage
+            guardarPedido({
+                alumno: ninoActual.caption,
+                codigo: ninoActual.codigo,
+                paquete: paqueteSeleccionado.nombre,
+                precio: paqueteSeleccionado.precio,
+                fotos: fotosSeleccionadas.map(f => f.nombre),
+                total: fotosSeleccionadas.length,
+                fecha: new Date().toISOString()
+            });
+
+            modalPaquetesOverlay.classList.remove('active');
             window.open(`https://wa.me/5219611111111?text=${texto}`, '_blank');
+        });
+
+        modalPaquetesClose.addEventListener('click', () => modalPaquetesOverlay.classList.remove('active'));
+        modalPaquetesOverlay.addEventListener('click', (e) => {
+            if (e.target === modalPaquetesOverlay) modalPaquetesOverlay.classList.remove('active');
+        });
+
+        // ============ GUARDAR PEDIDOS ============
+        function guardarPedido(pedido) {
+            const pedidos = JSON.parse(localStorage.getItem('pedidosGraduacion') || '[]');
+            pedidos.push(pedido);
+            localStorage.setItem('pedidosGraduacion', JSON.stringify(pedidos));
+        }
+
+        function obtenerPedidos() {
+            return JSON.parse(localStorage.getItem('pedidosGraduacion') || '[]');
+        }
+
+        // ============ PANEL DE PEDIDOS ============
+        const btnVerPedidos = document.createElement('button');
+        btnVerPedidos.textContent = '📋 Pedidos';
+        btnVerPedidos.style.cssText = `
+            position:fixed;bottom:20px;right:20px;z-index:5000;
+            background:linear-gradient(135deg,#8e44ad,#9b59b6);color:white;
+            border:none;padding:12px 20px;border-radius:25px;
+            font-size:1rem;font-weight:bold;cursor:pointer;
+            box-shadow:0 4px 15px rgba(142,68,173,0.4);
+            transition:transform 0.3s;
+        `;
+        btnVerPedidos.addEventListener('mouseenter', () => btnVerPedidos.style.transform = 'scale(1.05)');
+        btnVerPedidos.addEventListener('mouseleave', () => btnVerPedidos.style.transform = 'scale(1)');
+        btnVerPedidos.addEventListener('click', mostrarPanelPedidos);
+        document.body.appendChild(btnVerPedidos);
+
+        // ============ MODAL PEDIDOS ============
+        const modalPedidosOverlay = document.createElement('div');
+        modalPedidosOverlay.className = 'modal-codigo-overlay';
+        modalPedidosOverlay.id = 'modalPedidos';
+        modalPedidosOverlay.innerHTML = `
+            <button class="modal-codigo-close" id="modalPedidosClose">✕</button>
+            <div class="modal-codigo-box" style="max-width:600px;max-height:80vh;overflow-y:auto;text-align:left;">
+                <h2 style="text-align:center;">📋 Pedidos registrados</h2>
+                <div id="pedidosList"></div>
+                <div style="text-align:center;margin-top:1rem;">
+                    <button id="btnExportarPedidos" style="
+                        background:#3498db;color:white;border:none;
+                        padding:10px 20px;border-radius:8px;font-size:0.9rem;
+                        cursor:pointer;font-weight:bold;
+                    ">📥 Exportar</button>
+                    <button id="btnLimpiarPedidos" style="
+                        background:#e74c3c;color:white;border:none;
+                        padding:10px 20px;border-radius:8px;font-size:0.9rem;
+                        cursor:pointer;font-weight:bold;margin-left:0.5rem;
+                    ">🗑️ Limpiar todo</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modalPedidosOverlay);
+
+        const modalPedidosClose = document.getElementById('modalPedidosClose');
+
+        function mostrarPanelPedidos() {
+            const pedidos = obtenerPedidos();
+            const list = document.getElementById('pedidosList');
+
+            if (pedidos.length === 0) {
+                list.innerHTML = '<p style="text-align:center;color:#999;padding:2rem;">No hay pedidos registrados aún</p>';
+            } else {
+                list.innerHTML = pedidos.map((p, i) => `
+                    <div style="
+                        padding:1rem;margin-bottom:0.8rem;
+                        background:#f9f9f9;border-radius:10px;
+                        border-left:4px solid #27ae60;
+                    ">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+                            <strong style="color:#2c3e50;font-size:1rem;">${p.alumno}</strong>
+                            <span style="color:#999;font-size:0.8rem;">${new Date(p.fecha).toLocaleString('es-MX')}</span>
+                        </div>
+                        <div style="display:flex;gap:1rem;font-size:0.85rem;color:#555;">
+                            <span>📦 ${p.paquete} <strong style="color:#27ae60;">${p.precio}</strong></span>
+                            <span>📸 ${p.total} foto(s)</span>
+                        </div>
+                        ${p.fotos && p.fotos.length > 0 ? `<details style="margin-top:0.4rem;font-size:0.8rem;color:#888;"><summary>Ver fotos</summary>${p.fotos.map(f => `<div>• ${f}</div>`).join('')}</details>` : ''}
+                    </div>
+                `).join('');
+            }
+
+            modalPedidosOverlay.classList.add('active');
+        }
+
+        document.getElementById('btnExportarPedidos').addEventListener('click', () => {
+            const pedidos = obtenerPedidos();
+            const texto = pedidos.map(p => `${p.alumno}\t${p.paquete}\t${p.precio}\t${p.total} fotos\t${new Date(p.fecha).toLocaleString('es-MX')}\t${(p.fotos||[]).join(', ')}`).join('\n');
+            const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `pedidos_graduacion_${new Date().toISOString().slice(0,10)}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        document.getElementById('btnLimpiarPedidos').addEventListener('click', () => {
+            if (confirm('¿Borrar todos los pedidos registrados?')) {
+                localStorage.removeItem('pedidosGraduacion');
+                mostrarPanelPedidos();
+            }
         });
 
         // ============ LIMPIAR SELECCIÓN ============
@@ -998,11 +1184,18 @@
             lightboxImg.src = `${BASE_GALERIA}${rutaFoto(lightboxFotos[lightboxIdx])}`;
         });
 
+        modalPedidosClose.addEventListener('click', () => modalPedidosOverlay.classList.remove('active'));
+        modalPedidosOverlay.addEventListener('click', (e) => {
+            if (e.target === modalPedidosOverlay) modalPedidosOverlay.classList.remove('active');
+        });
+
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 if (lightbox.classList.contains('active')) lightbox.classList.remove('active');
+                else if (modalPaquetesOverlay.classList.contains('active')) modalPaquetesOverlay.classList.remove('active');
                 else if (modal.classList.contains('active')) cerrarModal();
                 else if (modalCodigo.classList.contains('active')) modalCodigo.classList.remove('active');
+                else if (modalPedidosOverlay.classList.contains('active')) modalPedidosOverlay.classList.remove('active');
                 return;
             }
             if (!lightbox.classList.contains('active')) return;
@@ -1015,7 +1208,7 @@
             const c = document.createElement('div');
             c.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:-1';
             document.body.appendChild(c);
-            for (let i = 0; i < 40; i++) {
+            for (let i = 0; i < 12; i++) {
                 const p = document.createElement('div');
                 const size = Math.random() * 4 + 2;
                 p.style.cssText = `position:absolute;width:${size}px;height:${size}px;background:rgba(243,156,18,${Math.random()*0.4+0.1});border-radius:50%;left:${Math.random()*100}%;top:${Math.random()*100}%`;
