@@ -746,7 +746,8 @@
                 const row = Math.floor(i / 2);
                 const isLeft = i % 2 === 0;
                 const topBase = 11 + row * (83 / Math.max(rows - 1, 1));
-                const top = isLeft ? topBase : topBase + (rightTops[row] - leftTops[Math.min(row, leftTops.length - 1)]);
+                const lastRightRow = Math.min(row, rightTops.length - 1);
+                const top = isLeft ? topBase : topBase + (rightTops[lastRightRow] - leftTops[lastRightRow]);
                 const left = isLeft ? leftLefts[row % leftLefts.length] : rightLefts[Math.min(row, rightLefts.length - 1)];
                 const rot = isLeft ? leftRots[row % leftRots.length] : rightRots[Math.min(row, rightRots.length - 1)];
                 div.style.top = top + '%';
