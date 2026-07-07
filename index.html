@@ -752,28 +752,28 @@
         const mobileStep = () => window.innerWidth <= 480 ? 5 : 4.5;
 
         // Posiciones originales de kinder (21 alumnos)
-        const origTops = [11,11,20,23,30,31,38,40,46,48,54,56,62,64,70,71,78,79,86,87,94];
-        const origLefts = [8,52,30,70,10,55,25,65,5,45,20,60,8,50,28,68,12,52,32,72,15];
-        const origRots = [-7,5,-3,6,-4,3,-6,4,-3,5,-5,3,-4,6,-3,4,-6,3,-4,5,-3];
-
-        function interpolar(arr, i, total) {
-            if (total <= 1) return arr[0];
-            const t = i / (total - 1);
-            const idx = t * (arr.length - 1);
-            const i0 = Math.floor(idx);
-            const i1 = Math.min(i0 + 1, arr.length - 1);
-            const f = idx - i0;
-            return arr[i0] + (arr[i1] - arr[i0]) * f;
-        }
+        const leftTops = [11,20,30,38,46,54,62,70,78,86,94];
+        const rightTops = [11,23,31,40,48,56,64,71,79,87];
+        const leftLefts = [8,30,10,25,5,20,8,28,12,32,15];
+        const rightLefts = [52,70,55,65,45,60,50,68,52,72];
+        const leftRots = [-7,-3,-4,-6,-3,-5,-4,-3,-6,-4,-3];
+        const rightRots = [5,6,3,4,5,3,6,4,3,5];
 
         function posicionarPolaroid(div, i, total) {
             if (isMobile()) {
                 div.style.top = (14 + i * mobileStep()) + '%';
                 div.style.left = `calc(50% - ${mobileWidth()}px)`;
             } else {
-                div.style.top = interpolar(origTops, i, total) + '%';
-                div.style.left = interpolar(origLefts, i, total) + '%';
-                div.style.transform = `rotate(${interpolar(origRots, i, total)}deg)`;
+                const rows = Math.ceil(total / 2);
+                const row = Math.floor(i / 2);
+                const isLeft = i % 2 === 0;
+                const topBase = 11 + row * (83 / Math.max(rows - 1, 1));
+                const top = isLeft ? topBase : topBase + (rightTops[row] - leftTops[Math.min(row, leftTops.length - 1)]);
+                const left = isLeft ? leftLefts[row % leftLefts.length] : rightLefts[Math.min(row, rightLefts.length - 1)];
+                const rot = isLeft ? leftRots[row % leftRots.length] : rightRots[Math.min(row, rightRots.length - 1)];
+                div.style.top = top + '%';
+                div.style.left = left + '%';
+                div.style.transform = `rotate(${rot}deg)`;
             }
         }
 
