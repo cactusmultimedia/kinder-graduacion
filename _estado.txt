@@ -1,0 +1,1 @@
+Documento activo: agradecieminto 2026Tamaño: 8 x 6 inCapas:1: Capa 1 visible=true kind=LayerKind.NORMAL2: emmanuel-paquete2 visible=true kind=LayerKind.NORMAL3: Fondo visible=true kind=LayerKind.NORMAL

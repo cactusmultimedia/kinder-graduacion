@@ -1,0 +1,1 @@
+[0] platilla[1] noe-paquete2[2] Fondonoe bounds:  left: 5.08 cm  top: 0 cm  right: 15.24 cm  bottom: 15.24 cm

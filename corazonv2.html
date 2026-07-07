@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corazón latiendo</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0008; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: monospace; overflow: hidden; }
+canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+const W = 700, H = 700;
+canvas.width = W;
+canvas.height = H;
+
+const CX = W / 2;
+const CY = 300;
+const RADIO = 100;
+const AMPLITUD = 260;
+const FRAMES = 240;
+const PASOS = 250;
+
+function easeInOut(t) {
+  return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+}
+
+function heartPoint(t) {
+  const x = 16 * Math.pow(Math.sin(t), 3);
+  const y = -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t));
+  return { x, y };
+}
+
+function circlePoint(t) {
+  return { x: RADIO * Math.cos(t), y: RADIO * Math.sin(t) };
+}
+
+function dibujarCorazon(morph, cx, cy, squashX, squashY) {
+  ctx.beginPath();
+  const s = RADIO / 16;
+  for (let i = 0; i <= PASOS; i++) {
+    const theta = (i / PASOS) * Math.PI * 2;
+    const hp = heartPoint(theta);
+    const cp = circlePoint(theta);
+    const px = cp.x + (hp.x * s - cp.x) * morph;
+    const py = cp.y + (hp.y * s - cp.y) * morph;
+    const x = cx + px * squashX;
+    const y = cy + py * squashY;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function dibujarSombra(alpha, squashX) {
+  const rw = RADIO * 1.6 * (1 + (1 - alpha) * 0.4) * squashX;
+  const rh = RADIO * 0.3 * (1 + (1 - alpha) * 0.4);
+  const sy = CY + AMPLITUD + 20;
+  ctx.beginPath();
+  ctx.ellipse(CX, sy, rw, rh, 0, 0, Math.PI * 2);
+  ctx.fillStyle = `rgba(180,0,40,${0.15 + alpha * 0.25})`;
+  ctx.fill();
+}
+
+function dibujarHUD(altura, morph) {
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.font = 'bold 28px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText(`${Math.round(altura)}px  ·  ${Math.round(morph * 100)}%`, CX, CY + AMPLITUD + 80);
+}
+
+let frame = 0;
+
+function loop() {
+  const t = frame / FRAMES;
+  const bounce = Math.abs(Math.sin(t * Math.PI));
+  const morph = easeInOut(bounce);
+  const altura = AMPLITUD * bounce;
+  const cy = CY - altura;
+
+  const squashY = 1 - 0.3 * (1 - bounce);
+  const squashX = 1 + 0.2 * (1 - bounce);
+
+  ctx.clearRect(0, 0, W, H);
+
+  dibujarSombra(bounce, squashX);
+
+  ctx.shadowColor = 'rgba(255,20,70,0.6)';
+  ctx.shadowBlur = 30;
+
+  if (morph < 0.01) {
+    ctx.beginPath();
+    ctx.arc(CX, cy, RADIO, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,20,70,0.9)';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,60,100,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  } else {
+    dibujarCorazon(morph, CX, cy, squashX, squashY);
+    ctx.fillStyle = 'rgba(255,20,70,0.9)';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = 'rgba(255,60,100,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+
+  ctx.shadowBlur = 0;
+  dibujarHUD(altura, morph);
+
+  frame = (frame + 1) % FRAMES;
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>

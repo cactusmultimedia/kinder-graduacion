@@ -1,0 +1,1 @@
+Nombre: logo cervantesTipo: ArtLayerFondo: falseVisible: trueOpacity: 100Capa de texto: falseBounds: 2.75166666666667,1.15146666666667 7.4168,4.73286666666667Width: 10.16 cmHeight: 15.24 cmRes: 300 ppi

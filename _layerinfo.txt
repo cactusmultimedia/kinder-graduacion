@@ -1,0 +1,1 @@
+Capa: azul-paquete2kind: LayerKind.SMARTOBJECTallLocked: falselinkedLayer: falselayerEffects: falseDoc resolution: 300 ppiDoc width: 8 inDoc height: 6 in

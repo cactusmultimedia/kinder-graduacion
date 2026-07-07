@@ -1,0 +1,1 @@
+Capa nombre encontrada!Posición: left=1.53246666666667 top=11.2691333333333 right=8.62753333333333 bottom=11.9295333333333 cmFont: Futura-CondensedMediumSize: 18 ptAlignment: Justification.CENTERColor: R=undefined G=undefined B=undefined

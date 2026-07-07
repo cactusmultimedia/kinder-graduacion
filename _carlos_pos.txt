@@ -1,0 +1,1 @@
+carlos bounds:  left: 5.08 cm  top: 0 cm  right: 15.24 cm  bottom: 15.24 cmTarget (Azul's pos): 0 x 0.728 -> 10.16 x 15.968 cm

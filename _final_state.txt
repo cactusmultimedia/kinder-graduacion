@@ -1,0 +1,1 @@
+Document: agradecieminto 2026-RecuperadoLayers:[0] platilla visible=true bounds: -0.17,-0.13 20.38,15.28[1] foto_16 visible=true bounds: 0.63,1.28 13.75,20.96[2] Fondo visible=true bounds: 0.00,0.00 20.32,15.24

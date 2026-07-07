@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evaluación Trimestre 2 · ¿Cómo aprendo?</title>
+<style>
+  :root{
+    --ink:#1b1a18;
+    --paper:#fbfaf6;
+    --line:#1b1a18;
+    --muted:#6c6760;
+    /* Bauhaus por sección */
+    --clay:#d1462f;
+    --ochre:#e7a72f;
+    --teal:#1f7a73;
+    --blue:#2f55c8;
+    --soft:#f1ede4;
+    --ok:#1f7a73;
+    --err:#c4341f;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:17px;
+    line-height:1.5;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:20px 18px 80px}
+
+  /* Encabezado */
+  header.top{
+    border:3px solid var(--line);
+    margin-bottom:26px;
+    background:#fff;
+  }
+  .top-bar{display:flex;height:14px}
+  .top-bar span{flex:1}
+  .top-bar span:nth-child(1){background:var(--clay)}
+  .top-bar span:nth-child(2){background:var(--ochre)}
+  .top-bar span:nth-child(3){background:var(--teal)}
+  .top-bar span:nth-child(4){background:var(--blue)}
+  .top-inner{padding:20px 22px 24px}
+  .eyebrow{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;color:var(--muted);margin:0 0 6px}
+  h1{font-size:1.7rem;line-height:1.15;margin:0 0 4px;font-weight:800;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:.4rem 0 0;font-size:.95rem}
+
+  /* Identificación */
+  .ident{display:grid;grid-template-columns:1fr;gap:14px;margin-top:20px}
+  @media(min-width:560px){.ident{grid-template-columns:2fr 1fr}}
+  .field label{display:block;font-weight:700;font-size:.85rem;margin-bottom:5px}
+  .field input[type=text]{
+    width:100%;padding:11px 12px;border:2px solid var(--line);border-radius:0;
+    font-size:1rem;background:#fff;color:var(--ink)
+  }
+  .field input[type=text]:focus{outline:3px solid var(--ochre);outline-offset:1px}
+
+  /* Secciones */
+  section.block{border:3px solid var(--line);background:#fff;margin:26px 0;}
+  .sec-head{display:flex;align-items:stretch;border-bottom:3px solid var(--line)}
+  .sec-num{
+    width:64px;min-width:64px;display:flex;align-items:center;justify-content:center;
+    font-size:1.9rem;font-weight:800;color:#fff;
+  }
+  .b1 .sec-num{background:var(--clay)}
+  .b2 .sec-num{background:var(--blue)}
+  .b3 .sec-num{background:var(--teal)}
+  .sec-titles{padding:12px 16px}
+  .sec-titles .k{font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--muted)}
+  .sec-titles h2{margin:2px 0 0;font-size:1.18rem;font-weight:800;line-height:1.15}
+  .sec-body{padding:8px 18px 22px}
+
+  .q{padding:16px 0;border-bottom:1px solid #e7e3d9}
+  .q:last-child{border-bottom:0}
+  .q .label{font-weight:600;margin-bottom:10px}
+  .q .label b{font-weight:800}
+  .hint{color:var(--muted);font-weight:400;font-size:.92rem}
+
+  /* Opciones radio/checkbox como botones */
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opt{position:relative}
+  .opt input{position:absolute;opacity:0;width:0;height:0}
+  .opt label{
+    display:block;cursor:pointer;padding:9px 14px;border:2px solid var(--line);
+    background:#fff;font-size:.95rem;font-weight:600;user-select:none;
+  }
+  .opt input:checked + label{background:var(--ink);color:var(--paper)}
+  .opt input:focus-visible + label{outline:3px solid var(--ochre);outline-offset:2px}
+  .opt.check input:checked + label{background:var(--teal);color:#fff;border-color:var(--teal)}
+
+  textarea, input.short{
+    width:100%;padding:11px 12px;border:2px solid var(--line);font-size:1rem;
+    background:#fff;color:var(--ink);font-family:inherit
+  }
+  textarea{min-height:74px;resize:vertical}
+  textarea:focus,input.short:focus{outline:3px solid var(--ochre);outline-offset:1px}
+  .porque{margin-top:10px}
+
+  /* Texto a completar */
+  .narrativa{font-size:1.05rem;line-height:2.1}
+  .narrativa p{margin:0 0 14px}
+  select.blank{
+    font-family:inherit;font-size:1rem;font-weight:700;color:var(--clay);
+    border:0;border-bottom:2px solid var(--clay);background:transparent;padding:2px 4px;
+    max-width:100%
+  }
+  select.blank:focus{outline:2px solid var(--ochre)}
+  input.otra{
+    display:none;margin-top:6px;width:100%;max-width:320px;
+    border:0;border-bottom:2px solid var(--clay);background:transparent;
+    font-size:1rem;font-weight:700;color:var(--clay);padding:2px 4px;font-family:inherit
+  }
+  input.otra.show{display:inline-block}
+
+  /* Enviar */
+  .actions{margin-top:30px;display:flex;flex-direction:column;gap:12px}
+  @media(min-width:520px){.actions{flex-direction:row;align-items:center}}
+  button{
+    font-family:inherit;font-size:1.05rem;font-weight:800;cursor:pointer;border:3px solid var(--line);
+    padding:14px 22px;background:var(--ochre);color:var(--ink);
+  }
+  button:hover{filter:brightness(.96)}
+  button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  button.ghost{background:#fff}
+  button[disabled]{opacity:.55;cursor:wait}
+
+  .status{margin-top:18px;padding:14px 16px;border:2px solid var(--line);font-weight:600;display:none}
+  .status.show{display:block}
+  .status.ok{border-color:var(--ok);background:#eef6f4;color:#13453f}
+  .status.bad{border-color:var(--err);background:#fbecea;color:#7a1d10}
+
+  .done{display:none;text-align:center;padding:40px 20px}
+  .done.show{display:block}
+  .done .mark{font-size:3rem;line-height:1}
+  .done h2{font-size:1.5rem;margin:14px 0 6px}
+  .footnote{color:var(--muted);font-size:.82rem;text-align:center;margin-top:34px}
+
+  @media (prefers-reduced-motion: no-preference){
+    section.block{animation:rise .4s ease both}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="top-bar"><span></span><span></span><span></span><span></span></div>
+    <div class="top-inner">
+      <p class="eyebrow">Evaluación · Trimestre 2</p>
+      <h1>¿Cómo aprendo?</h1>
+      <p class="sub">Contesta con calma. No hay respuestas buenas ni malas: sirve para reconocer tu forma de hacer y de pensar.</p>
+      <div class="ident">
+        <div class="field">
+          <label for="nombre">Nombre completo</label>
+          <input type="text" id="nombre" autocomplete="off" placeholder="Escribe tu nombre">
+        </div>
+        <div class="field">
+          <label for="grupo">Grado y grupo</label>
+          <input type="text" id="grupo" autocomplete="off" placeholder="Ej. 5°B">
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <form id="evalForm" novalidate>
+
+  <!-- ====== SECCIÓN 1 ====== -->
+  <section class="block b1">
+    <div class="sec-head">
+      <div class="sec-num">1</div>
+      <div class="sec-titles"><div class="k">Sobre nuestro proyecto</div><h2>¿Cómo aprendo?</h2></div>
+    </div>
+    <div class="sec-body">
+
+      <div class="q">
+        <div class="label">1. ¿Qué actividad prefieres para estudiar o aprender?</div>
+        <div class="opts" data-radio="p1">
+          <span class="opt"><input type="radio" name="p1" id="p1a" value="Ver imágenes"><label for="p1a">Ver imágenes</label></span>
+          <span class="opt"><input type="radio" name="p1" id="p1b" value="Escuchar historias"><label for="p1b">Escuchar historias</label></span>
+          <span class="opt"><input type="radio" name="p1" id="p1c" value="Hacer actividades"><label for="p1c">Hacer actividades</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">2. ¿Te gusta resolver crucigramas?</div>
+        <div class="opts" data-radio="p2">
+          <span class="opt"><input type="radio" name="p2" id="p2s" value="Sí"><label for="p2s">Sí</label></span>
+          <span class="opt"><input type="radio" name="p2" id="p2n" value="No"><label for="p2n">No</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">3. ¿Prefieres aprender solo o en equipo?</div>
+        <div class="opts" data-radio="p3_modo">
+          <span class="opt"><input type="radio" name="p3_modo" id="p3a" value="Solo"><label for="p3a">Solo</label></span>
+          <span class="opt"><input type="radio" name="p3_modo" id="p3b" value="En equipo"><label for="p3b">En equipo</label></span>
+        </div>
+        <input type="text" class="short porque" id="p3_porque" placeholder="¿Por qué?">
+      </div>
+
+      <div class="q">
+        <div class="label">4. En Canva, ¿qué te ayudó para hacer el diseño?</div>
+        <div class="opts" data-radio="p4">
+          <span class="opt"><input type="radio" name="p4" id="p4a" value="Los colores"><label for="p4a">Los colores</label></span>
+          <span class="opt"><input type="radio" name="p4" id="p4b" value="Las formas"><label for="p4b">Las formas</label></span>
+          <span class="opt"><input type="radio" name="p4" id="p4c" value="Los elementos"><label for="p4c">Los elementos</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">5. ¿Te resulta más fácil aprender con una aplicación como Canva o con dibujos en papel?</div>
+        <div class="opts" data-radio="p5">
+          <span class="opt"><input type="radio" name="p5" id="p5a" value="Canva (app)"><label for="p5a">Canva (app)</label></span>
+          <span class="opt"><input type="radio" name="p5" id="p5b" value="Dibujos en papel"><label for="p5b">Dibujos en papel</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">6. ¿Te resultó divertido hacer una gráfica en Excel?</div>
+        <div class="opts" data-radio="p6">
+          <span class="opt"><input type="radio" name="p6" id="p6s" value="Sí"><label for="p6s">Sí</label></span>
+          <span class="opt"><input type="radio" name="p6" id="p6n" value="No"><label for="p6n">No</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">7. ¿Qué te ayuda más en Excel, ver los resultados en gráficos o en listas?</div>
+        <div class="opts" data-radio="p7">
+          <span class="opt"><input type="radio" name="p7" id="p7a" value="Gráficos"><label for="p7a">Gráficos</label></span>
+          <span class="opt"><input type="radio" name="p7" id="p7b" value="Listas"><label for="p7b">Listas</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">Preguntas rápidas <span class="hint">— contesta Sí o No</span></div>
+
+        <div class="opts" style="margin-bottom:6px"><span class="label" style="margin:0;flex-basis:100%">8. ¿Te gusta aprender cantando?</span></div>
+        <div class="opts" data-radio="q8">
+          <span class="opt"><input type="radio" name="q8" id="q8s" value="Sí"><label for="q8s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q8" id="q8n" value="No"><label for="q8n">No</label></span>
+        </div>
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">9. ¿Eliges la comida por su color?</span></div>
+        <div class="opts" data-radio="q9">
+          <span class="opt"><input type="radio" name="q9" id="q9s" value="Sí"><label for="q9s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q9" id="q9n" value="No"><label for="q9n">No</label></span>
+        </div>
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">10. ¿Te gusta dibujar?</span></div>
+        <div class="opts" data-radio="q10">
+          <span class="opt"><input type="radio" name="q10" id="q10s" value="Sí"><label for="q10s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q10" id="q10n" value="No"><label for="q10n">No</label></span>
+        </div>
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">11. ¿Aprendiste algo con el crucigrama?</span></div>
+        <div class="opts" data-radio="q11">
+          <span class="opt"><input type="radio" name="q11" id="q11s" value="Sí"><label for="q11s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q11" id="q11n" value="No"><label for="q11n">No</label></span>
+        </div>
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">12. ¿Qué te ayuda a recordar las palabras?</span></div>
+        <input type="text" class="short" id="q12" placeholder="Escribe tu respuesta">
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">13. ¿Te gusta trabajar en equipo?</span></div>
+        <div class="opts" data-radio="q13">
+          <span class="opt"><input type="radio" name="q13" id="q13s" value="Sí"><label for="q13s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q13" id="q13n" value="No"><label for="q13n">No</label></span>
+        </div>
+
+        <div class="opts" style="margin:14px 0 6px"><span class="label" style="margin:0;flex-basis:100%">14. ¿Te gusta leer?</span></div>
+        <div class="opts" data-radio="q14">
+          <span class="opt"><input type="radio" name="q14" id="q14s" value="Sí"><label for="q14s">Sí</label></span>
+          <span class="opt"><input type="radio" name="q14" id="q14n" value="No"><label for="q14n">No</label></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ====== SECCIÓN 2 ====== -->
+  <section class="block b2">
+    <div class="sec-head">
+      <div class="sec-num">2</div>
+      <div class="sec-titles"><div class="k">Cómo me gusta que me enseñen</div><h2>Mis actividades y momentos</h2></div>
+    </div>
+    <div class="sec-body">
+
+      <div class="q">
+        <div class="label">Marca las actividades que <b>prefieres</b> para estudiar y aprender <span class="hint">(puedes elegir varias)</span></div>
+        <div class="opts" data-check="estilos">
+          <span class="opt check"><input type="checkbox" name="estilos" id="e1" value="Leer libros"><label for="e1">Leer libros</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e2" value="Escuchar historias"><label for="e2">Escuchar historias</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e3" value="Ver videos"><label for="e3">Ver videos</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e4" value="Hacer experimentos"><label for="e4">Hacer experimentos</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e5" value="Dibujar y escribir sobre lo que aprendo"><label for="e5">Dibujar y escribir sobre lo que aprendo</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e6" value="Juegos de computadora para aprender"><label for="e6">Juegos de computadora para aprender</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e7" value="Recordar las cosas que escucho"><label for="e7">Recordar las cosas que escucho</label></span>
+          <span class="opt check"><input type="checkbox" name="estilos" id="e8" value="Observar cosas nuevas"><label for="e8">Observar cosas nuevas</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">Mis momentos de aprendizaje <span class="hint">— elige la palabra que mejor te describe (o escribe la tuya)</span></div>
+        <div class="narrativa">
+          <p>Cuando estoy en la escuela, disfruto mucho de las clases, pero la que más me gusta es
+            <select class="blank" data-key="t1"><option value="">elige…</option><option>matemáticas</option><option>ciencias</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">.
+            Me siento feliz en esa clase porque me gusta aprender sobre
+            <select class="blank" data-key="t2"><option value="">elige…</option><option>números</option><option>naturaleza</option><option>animales</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">,
+            y siempre me emociona descubrir cosas nuevas.</p>
+
+          <p>A veces imagino qué me gustaría hacer cuando sea grande. Me encantaría estudiar algo relacionado con
+            <select class="blank" data-key="t3"><option value="">elige…</option><option>la ciencia</option><option>las artes</option><option>la tecnología</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">,
+            porque me fascina cómo se puede
+            <select class="blank" data-key="t4"><option value="">elige…</option><option>crear</option><option>construir</option><option>descubrir</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya"> cosas nuevas.</p>
+
+          <p>Cuando tengo tiempo libre, me gusta jugar a
+            <select class="blank" data-key="t5"><option value="">elige…</option><option>ser maestro</option><option>ser médico</option><option>construir cosas</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">,
+            porque me ayuda a pensar en lo que me gustaría hacer en el futuro y aprender jugando.</p>
+
+          <p>El lugar que prefiero de mi escuela es
+            <select class="blank" data-key="t6"><option value="">elige…</option><option>la biblioteca</option><option>un jardín</option><option>la sala de computadoras</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">,
+            porque puedo aprender cosas interesantes.</p>
+
+          <p>Finalmente, quiero ayudar a conservar las cosas importantes de nuestra cultura. Me gustaría aprender más sobre
+            <select class="blank" data-key="t7"><option value="">elige…</option><option>nuestras fiestas</option><option>música</option><option>historias</option><option value="__otra__">otra…</option></select><input type="text" class="otra" placeholder="escribe la tuya">,
+            para que todos puedan conocerlo y valorarlo.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ====== SECCIÓN 3 ====== -->
+  <section class="block b3">
+    <div class="sec-head">
+      <div class="sec-num">3</div>
+      <div class="sec-titles"><div class="k">La salud inicia con una buena nutrición</div><h2>Reflexiones y convivencia</h2></div>
+    </div>
+    <div class="sec-body">
+
+      <div class="q">
+        <div class="label">¿Consideras importante alimentarte sanamente?</div>
+        <div class="opts" data-radio="ref_sano">
+          <span class="opt"><input type="radio" name="ref_sano" id="rs1" value="Sí"><label for="rs1">Sí</label></span>
+          <span class="opt"><input type="radio" name="ref_sano" id="rs2" value="No"><label for="rs2">No</label></span>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="label">Comparte: ¿Qué puedes hacer para que toda tu familia consuma alimentos sanos?</div>
+        <textarea id="ref_familia" placeholder="Escribe aquí…"></textarea>
+      </div>
+
+      <div class="q">
+        <div class="label">Cuenta: ¿Cómo ha cambiado tu forma de alimentarte?</div>
+        <textarea id="ref_cambio" placeholder="Escribe aquí…"></textarea>
+      </div>
+
+      <div class="q">
+        <div class="label">Valoración actitudinal <span class="hint">— marca las acciones que más te agradan cuando convives en clase</span></div>
+        <div class="opts" data-check="actitudes">
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a1" value="Escuchar con atención"><label for="a1">Escuchar con atención</label></span>
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a2" value="Cuidar los materiales de la escuela"><label for="a2">Cuidar los materiales</label></span>
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a3" value="Seguir las instrucciones y terminar las tareas"><label for="a3">Seguir instrucciones y terminar tareas</label></span>
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a4" value="Pedir disculpas si cometo un error"><label for="a4">Pedir disculpas si cometo un error</label></span>
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a5" value="Respetar mi turno para hablar"><label for="a5">Respetar mi turno para hablar</label></span>
+          <span class="opt check"><input type="checkbox" name="actitudes" id="a6" value="Ayudar a un amigo"><label for="a6">Ayudar a un amigo</label></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="actions">
+    <button type="submit" id="enviar">Enviar evaluación</button>
+    <button type="button" class="ghost" id="respaldo">Descargar respaldo</button>
+  </div>
+  <div class="status" id="status"></div>
+
+  </form>
+
+  <div class="done" id="done">
+    <div class="mark">✓</div>
+    <h2>¡Listo, gracias!</h2>
+    <p>Tus respuestas se guardaron. Ya puedes cerrar esta página.</p>
+  </div>
+
+  <p class="footnote">Colegio de Cervantes · Cultura Digital — el profe lo usa solo para conocer cómo aprendes.</p>
+</div>
+
+<script>
+// ====== CONFIGURACIÓN ======
+// Pega aquí la URL de tu Google Apps Script (termina en /exec).
+// Si la dejas vacía, el formulario solo permite "Descargar respaldo".
+var SCRIPT_URL = "";
+
+// Orden de campos (debe coincidir con los encabezados del Apps Script)
+var CAMPOS = ["timestamp","nombre","grupo","p1","p2","p3_modo","p3_porque","p4","p5","p6","p7",
+  "q8","q9","q10","q11","q12","q13","q14","estilos","t1","t2","t3","t4","t5","t6","t7",
+  "ref_sano","ref_familia","ref_cambio","actitudes"];
+
+// Mostrar campo "otra" al elegir "otra…"
+var blanks = document.querySelectorAll('select.blank');
+for (var i=0;i<blanks.length;i++){
+  blanks[i].addEventListener('change', function(){
+    var inp = this.nextElementSibling;
+    if (inp && inp.classList.contains('otra')){
+      if (this.value === '__otra__'){ inp.classList.add('show'); inp.focus(); }
+      else { inp.classList.remove('show'); inp.value=''; }
+    }
+  });
+}
+
+function radioVal(name){
+  var el = document.querySelector('input[name="'+name+'"]:checked');
+  return el ? el.value : "";
+}
+function checkVals(name){
+  var els = document.querySelectorAll('input[name="'+name+'"]:checked');
+  var out=[]; for (var i=0;i<els.length;i++){ out.push(els[i].value); }
+  return out.join(" | ");
+}
+function blankVal(key){
+  var sel = document.querySelector('select.blank[data-key="'+key+'"]');
+  if (!sel) return "";
+  if (sel.value === '__otra__'){
+    var inp = sel.nextElementSibling;
+    return inp ? inp.value.trim() : "";
+  }
+  return sel.value;
+}
+function txt(id){ var el=document.getElementById(id); return el ? el.value.trim() : ""; }
+
+function recolectar(){
+  return {
+    timestamp: new Date().toISOString(),
+    nombre: txt('nombre'),
+    grupo: txt('grupo'),
+    p1: radioVal('p1'), p2: radioVal('p2'),
+    p3_modo: radioVal('p3_modo'), p3_porque: txt('p3_porque'),
+    p4: radioVal('p4'), p5: radioVal('p5'), p6: radioVal('p6'), p7: radioVal('p7'),
+    q8: radioVal('q8'), q9: radioVal('q9'), q10: radioVal('q10'), q11: radioVal('q11'),
+    q12: txt('q12'), q13: radioVal('q13'), q14: radioVal('q14'),
+    estilos: checkVals('estilos'),
+    t1: blankVal('t1'), t2: blankVal('t2'), t3: blankVal('t3'), t4: blankVal('t4'),
+    t5: blankVal('t5'), t6: blankVal('t6'), t7: blankVal('t7'),
+    ref_sano: radioVal('ref_sano'),
+    ref_familia: txt('ref_familia'), ref_cambio: txt('ref_cambio'),
+    actitudes: checkVals('actitudes')
+  };
+}
+
+function setStatus(msg, kind){
+  var s = document.getElementById('status');
+  s.textContent = msg;
+  s.className = 'status show ' + (kind||'');
+}
+
+function descargar(datos){
+  var orden={}; for (var i=0;i<CAMPOS.length;i++){ orden[CAMPOS[i]] = datos[CAMPOS[i]] || ""; }
+  var blob = new Blob([JSON.stringify(orden, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  var nom = (datos.nombre || 'alumno').replace(/[^a-z0-9áéíóúñ ]/gi,'').replace(/\s+/g,'_');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'respuesta_' + nom + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+document.getElementById('respaldo').addEventListener('click', function(){
+  var d = recolectar();
+  if (!d.nombre){ setStatus('Escribe tu nombre antes de descargar el respaldo.', 'bad'); return; }
+  descargar(d);
+  setStatus('Respaldo descargado. Entrégaselo al profe si la red falla.', 'ok');
+});
+
+document.getElementById('evalForm').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var d = recolectar();
+  if (!d.nombre || !d.grupo){
+    setStatus('Falta tu nombre o tu grado y grupo.', 'bad');
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+  var btn = document.getElementById('enviar');
+
+  if (!SCRIPT_URL){
+    descargar(d);
+    setStatus('No hay servidor configurado: se descargó tu respaldo. Entrégaselo al profe.', 'ok');
+    return;
+  }
+
+  btn.disabled = true; setStatus('Enviando…', '');
+  fetch(SCRIPT_URL, {
+    method:'POST',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(d)
+  }).then(function(r){ return r.json().catch(function(){return {ok:true};}); })
+    .then(function(res){
+      if (res && res.ok === false){ throw new Error(res.error || 'error'); }
+      document.getElementById('evalForm').style.display='none';
+      document.getElementById('done').className='done show';
+      window.scrollTo({top:0, behavior:'smooth'});
+    })
+    .catch(function(){
+      btn.disabled = false;
+      descargar(d);
+      setStatus('No se pudo enviar (revisa la red). Se descargó un respaldo: entrégaselo al profe.', 'bad');
+    });
+});
+</script>
+</body>
+</html>

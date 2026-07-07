@@ -129,6 +129,85 @@ async function listRootFolders(drive) {
   console.log('');
 }
 
+async function uploadFile(drive, filePath, folderId) {
+  const fileName = path.basename(filePath);
+  const fileSize = fs.statSync(filePath).size;
+  console.log(`  📤 Subiendo ${fileName} (${(fileSize / 1024 / 1024).toFixed(1)} MB)...`);
+
+  const res = await drive.files.create({
+    requestBody: {
+      name: fileName,
+      parents: [folderId],
+    },
+    media: {
+      body: fs.createReadStream(filePath),
+    },
+    fields: 'id, name, webViewLink',
+  });
+
+  console.log(`     ✅ ${res.data.name} → ${res.data.webViewLink}`);
+  return res.data;
+}
+
+async function uploadAll(drive) {
+  const folderName = process.argv[3] || 'PSD';
+  console.log(`\n🔍 Buscando carpeta "${folderName}"...\n`);
+
+  const searchRes = await drive.files.list({
+    q: `name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+    fields: 'files(id, name)',
+    pageSize: 10,
+  });
+
+  if (searchRes.data.files.length === 0) {
+    console.log(`❌ No se encontró la carpeta "${folderName}"`);
+    console.log('   Creala o usa: node drive.js upload <folder-id>');
+    rl.close();
+    return;
+  }
+
+  const folder = searchRes.data.files[0];
+  console.log(`📁 Carpeta encontrada: ${folder.name} (ID: ${folder.id})\n`);
+
+  const last30 = new Date();
+  last30.setDate(last30.getDate() - 30);
+  const last30ISO = last30.toISOString();
+
+  const searchDirs = [
+    '/Users/navirami/Documents',
+    '/Users/navirami/Downloads',
+    '/Users/navirami/Desktop',
+  ];
+
+  const extensions = ['.psd', '.ai'];
+  const allFiles = [];
+
+  for (const dir of searchDirs) {
+    for (const ext of extensions) {
+      try {
+        const find = require('child_process').execSync(
+          `find "${dir}" -maxdepth 4 -iname "*${ext}" -newer "${last30ISO}" -type f 2>/dev/null`,
+          { encoding: 'utf8' }
+        );
+        if (find.trim()) {
+          allFiles.push(...find.trim().split('\n'));
+        }
+      } catch (e) { /* ignore */ }
+    }
+  }
+
+  const uniqueFiles = [...new Set(allFiles)];
+  console.log(`📦 Archivos a subir (${uniqueFiles.length}):\n`);
+  uniqueFiles.forEach(f => console.log(`   📄 ${path.basename(f)}`));
+  console.log('');
+
+  for (const filePath of uniqueFiles) {
+    await uploadFile(drive, filePath, folder.id);
+  }
+
+  console.log(`\n🎉 ¡Subidos ${uniqueFiles.length} archivos a "${folderName}"!`);
+}
+
 async function main() {
   const action = process.argv[2] || 'trash';
 
@@ -137,9 +216,19 @@ async function main() {
 
   if (action === 'folders') {
     await listRootFolders(drive);
+  } else if (action === 'upload') {
+    const filePath = process.argv[3];
+    const folderId = process.argv[4];
+    if (!filePath || !folderId) {
+      console.log('Uso: node drive.js upload <ruta-archivo> <id-carpeta>');
+      process.exit(1);
+    }
+    await uploadFile(drive, filePath, folderId);
+  } else if (action === 'upload-all') {
+    await uploadAll(drive);
   } else if (action === 'create-folder') {
     const folderName = process.argv[3];
-    const parentId = process.argv[4]; // opcional
+    const parentId = process.argv[4];
     if (!folderName) {
       console.log('Uso: node drive.js create-folder <nombre> [id_carpeta_padre]');
       process.exit(1);

@@ -1,0 +1,1 @@
+Noe position:  left: 0.62653333333333 cm  top: 1.27846666666667 cm  right: 10.7865333333333 cm  bottom: 16.5184666666667 cmDoc size: 20.32 x 15.24 cmResolution: 300 ppi

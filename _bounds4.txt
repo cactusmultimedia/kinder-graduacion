@@ -1,0 +1,1 @@
+Active layer: azul-paquete2Bounds:  left: 2 in  top: 0 in  right: 6 in  bottom: 6 in

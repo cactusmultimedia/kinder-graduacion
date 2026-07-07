@@ -1,0 +1,1 @@
+1: emmanuel-paquete2 visible=true smart=true2: Capa 1 visible=true smart=false3: emmanuel-paquete2 visible=true smart=false4: Fondo visible=true smart=false

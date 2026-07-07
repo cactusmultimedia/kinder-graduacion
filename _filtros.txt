@@ -1,0 +1,1 @@
+Capa: emmanuel-paquete2  smartObject: undefined  no smartObject: TypeError: undefined no es un objeto  error filters: TypeError: undefined no es un objeto

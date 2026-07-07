@@ -1,0 +1,1 @@
+Capas después de limpiar:1: emmanuel-paquete2 visible=true2: Fondo visible=true

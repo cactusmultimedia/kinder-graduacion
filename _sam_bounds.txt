@@ -1,0 +1,1 @@
+Current bounds:  left: -0.16933333333333 cm  top: 0.92286666666667 cm  right: 9.99066666666667 cm  bottom: 16.1628666666667 cmTarget (from Noe): left=0.6265, top=1.2785 cm

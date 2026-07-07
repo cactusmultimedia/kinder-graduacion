@@ -1,0 +1,1 @@
+Capas visibles:1: logo cervantes visible=true bg=false2: COLEGIO DE CERVANTES visible=true bg=false3: PREESCOLAR visible=true bg=false4: GENERACIÓN  2023-2026 visible=true bg=false5: Profesora:  Virginia Elizabeth Ruiz Cendón visible=true bg=false6: MANUEL RAMÓN BASCOS LÓPEZ visible=true bg=false7: Capa 1 visible=false bg=false8: Fondo visible=false bg=true

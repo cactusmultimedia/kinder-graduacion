@@ -1,0 +1,1 @@
+azul bounds:  left: -516 in  top: 74 in  right: -512 in  bottom: 80 in

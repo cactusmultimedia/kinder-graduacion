@@ -1,0 +1,1 @@
+Current bounds:  left: 2 in  top: 0 in  right: 6 in  bottom: 6 inRes: 300Current size: 4 x 6 inTarget: 0.2733 x 0.2467 -> 4.2733 x 6.2467 in (4x6 in)

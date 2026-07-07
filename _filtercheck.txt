@@ -1,0 +1,1 @@
+azul layer after filter attempt:  kind: LayerKind.NORMAL  has smart filters: N/A  history states: 5  last state: Filtro de Camera Raw  prev state: Rasterizar capa

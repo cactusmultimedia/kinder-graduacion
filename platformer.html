@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Aether Jump - Plataformas 2D</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a1a; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+canvas { display: block; image-rendering: pixelated; border: 2px solid #2a2a4a; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+"use strict";
+
+const TILE = 32;
+const COLS = 80;
+const ROWS = 30;
+const FIXED_DT = 1 / 60;
+const GRAVITY = 2200;
+const PLAYER_SPEED = 200;
+const PLAYER_JUMP = -520;
+const COYOTE_TIME = 0.1;
+const JUMP_BUFFER = 0.12;
+const ENEMY_SPEED_PATROL = 80;
+const ENEMY_SPEED_FLYER = 60;
+const CAMERA_SMOOTH = 0.08;
+const CAMERA_LOOKAHEAD = 120;
+
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+  canvas.width = Math.min(960, window.innerWidth - 20);
+  canvas.height = Math.min(480, window.innerHeight - 20);
+}
+resize();
+window.addEventListener("resize", resize);
+
+const LEVEL_DATA = [
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                      CCC                       CCC                             ",
+  "                                                            G                  ",
+  "                         ===                  C    C     ======                 ",
+  "                  CCC                  CCC                    CCC               ",
+  "           ===        ===                         ===              ===           ",
+  "                       CCC         C           CCC     C                       ",
+  "        CCC                         ===                                ===     ",
+  "     ===    ===                                                  ===             ",
+  "                                                            C                  ",
+  "          C        C                    C                   ===     C           ",
+  "     ===  ===  ===  ===   ===  ===  ===  ===   ===  ===  ===  ===   ===  ===   ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "                                                                                ",
+  "    E      E                   E         E                  E        E           ",
+  "                                                                                ",
+  "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+  "################################################################################",
+  "################################################################################"
+];
+
+const tiles = [];
+const enemies = [];
+const coins = [];
+let goalPos = null;
+
+function parseLevel() {
+  tiles.length = 0;
+  enemies.length = 0;
+  coins.length = 0;
+  goalPos = null;
+  for (let r = 0; r < ROWS; r++) {
+    tiles[r] = [];
+    const row = LEVEL_DATA[r] || "";
+    for (let c = 0; c < COLS; c++) {
+      const ch = row[c] || " ";
+      tiles[r][c] = 0;
+      if (ch === "#") tiles[r][c] = 1;
+      else if (ch === "=") tiles[r][c] = 2;
+      else if (ch === "C") {
+        coins.push({ x: c * TILE + 8, y: r * TILE + 8, w: 16, h: 16, alive: true, anim: Math.random() * Math.PI * 2 });
+      } else if (ch === "E") {
+        const ey = r * TILE + TILE - 20;
+        const ex = c * TILE + 6;
+        if (Math.random() < 0.5) {
+          enemies.push({ type: "patrol", x: ex, y: ey, w: 20, h: 20, dir: 1, speed: ENEMY_SPEED_PATROL, alive: true, anim: 0 });
+        } else {
+          enemies.push({ type: "flyer", x: ex, y: r * TILE, w: 20, h: 16, dir: 1, speed: ENEMY_SPEED_FLYER, alive: true, anim: 0, baseY: r * TILE });
+        }
+      } else if (ch === "G") {
+        goalPos = { x: c * TILE, y: (r - 1) * TILE, w: TILE, h: TILE * 2 };
+      }
+    }
+  }
+}
+
+function getTile(r, c) {
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return 1;
+  return tiles[r][c];
+}
+
+function isSolid(r, c) {
+  const t = getTile(r, c);
+  return t === 1;
+}
+
+function isOneWay(r, c) {
+  return getTile(r, c) === 2;
+}
+
+const keys = {};
+let lastKeys = {};
+window.addEventListener("keydown", e => { keys[e.code] = true; e.preventDefault(); });
+window.addEventListener("keyup", e => { keys[e.code] = false; e.preventDefault(); });
+
+function keyJust(code) { return keys[code] && !lastKeys[code]; }
+
+const player = {
+  x: 3 * TILE, y: 25 * TILE - 24,
+  w: 20, h: 24,
+  vx: 0, vy: 0,
+  onGround: false,
+  wasOnGround: false,
+  coyoteTimer: 0,
+  jumpBufferTimer: 0,
+  facingRight: true,
+  lives: 3,
+  score: 0,
+  invTimer: 0,
+  hurtTimer: 0,
+  winTimer: 0,
+  walkFrame: 0,
+  walkTimer: 0
+};
+
+const camera = { x: 0, y: 0, targetX: 0, targetY: 0 };
+const particles = [];
+const dustParticles = [];
+let shakeTimer = 0;
+let shakeIntensity = 0;
+
+let state = "title";
+let totalTime = 0;
+
+function spawnDust(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    dustParticles.push({
+      x: x + (Math.random() - 0.5) * 12,
+      y: y,
+      vx: (Math.random() - 0.5) * 80,
+      vy: -Math.random() * 60 - 20,
+      life: 0.3 + Math.random() * 0.3,
+      maxLife: 0.3 + Math.random() * 0.3,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function spawnHitParticles(x, y, count, color) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 60 + Math.random() * 120;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life: 0.3 + Math.random() * 0.4,
+      maxLife: 0.3 + Math.random() * 0.4,
+      size: 2 + Math.random() * 4,
+      color: color || "#fff"
+    });
+  }
+}
+
+function shake(intensity, duration) {
+  shakeIntensity = intensity;
+  shakeTimer = duration;
+}
+
+function aabbOverlap(a, b) {
+  return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+function collideX(entity) {
+  const startCol = Math.floor(entity.x / TILE);
+  const endCol = Math.floor((entity.x + entity.w - 1) / TILE);
+  const startRow = Math.floor(entity.y / TILE);
+  const endRow = Math.floor((entity.y + entity.h - 1) / TILE);
+  for (let r = startRow; r <= endRow; r++) {
+    for (let c = startCol; c <= endCol; c++) {
+      if (isSolid(r, c)) {
+        if (entity.vx > 0) {
+          entity.x = c * TILE - entity.w;
+        } else if (entity.vx < 0) {
+          entity.x = (c + 1) * TILE;
+        }
+        entity.vx = 0;
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function collideY(entity) {
+  const startCol = Math.floor(entity.x / TILE);
+  const endCol = Math.floor((entity.x + entity.w - 1) / TILE);
+  const startRow = Math.floor(entity.y / TILE);
+  const endRow = Math.floor((entity.y + entity.h - 1) / TILE);
+  entity.onGround = false;
+  for (let r = startRow; r <= endRow; r++) {
+    for (let c = startCol; c <= endCol; c++) {
+      if (isSolid(r, c)) {
+        if (entity.vy > 0) {
+          entity.y = r * TILE - entity.h;
+          entity.vy = 0;
+          entity.onGround = true;
+        } else if (entity.vy < 0) {
+          entity.y = (r + 1) * TILE;
+          entity.vy = 0;
+        }
+        return true;
+      }
+      if (isOneWay(r, c)) {
+        if (entity.vy > 0) {
+          const platTop = r * TILE;
+          const prevBottom = entity.y + entity.h - entity.vy * FIXED_DT;
+          if (prevBottom <= platTop + 2) {
+            entity.y = platTop - entity.h;
+            entity.vy = 0;
+            entity.onGround = true;
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
+}
+
+function resetGame() {
+  player.x = 3 * TILE;
+  player.y = 25 * TILE - 24;
+  player.vx = 0;
+  player.vy = 0;
+  player.onGround = false;
+  player.coyoteTimer = 0;
+  player.jumpBufferTimer = 0;
+  player.facingRight = true;
+  player.lives = 3;
+  player.score = 0;
+  player.invTimer = 0;
+  player.hurtTimer = 0;
+  player.winTimer = 0;
+  particles.length = 0;
+  dustParticles.length = 0;
+  shakeTimer = 0;
+  parseLevel();
+}
+
+function hurtPlayer() {
+  if (player.invTimer > 0) return;
+  player.lives--;
+  player.invTimer = 1.5;
+  player.hurtTimer = 0.4;
+  player.vy = -300;
+  shake(8, 0.3);
+  spawnHitParticles(player.x + player.w / 2, player.y + player.h / 2, 12, "#ff4444");
+  if (player.lives <= 0) {
+    state = "gameover";
+  }
+}
+
+function updatePlayer(dt) {
+  if (player.hurtTimer > 0) player.hurtTimer -= dt;
+  if (player.invTimer > 0) player.invTimer -= dt;
+
+  const moveDir = (keys["ArrowRight"] || keys["KeyD"] ? 1 : 0) - (keys["ArrowLeft"] || keys["KeyA"] ? 1 : 0);
+  player.vx = moveDir * PLAYER_SPEED;
+  if (moveDir !== 0) player.facingRight = moveDir > 0;
+
+  player.wasOnGround = player.onGround;
+
+  if (player.onGround) {
+    player.coyoteTimer = COYOTE_TIME;
+  } else {
+    player.coyoteTimer -= dt;
+  }
+
+  if (keyJust("Space") || keyJust("ArrowUp") || keyJust("KeyW")) {
+    player.jumpBufferTimer = JUMP_BUFFER;
+  } else {
+    player.jumpBufferTimer -= dt;
+  }
+
+  if (player.jumpBufferTimer > 0 && player.coyoteTimer > 0) {
+    player.vy = PLAYER_JUMP;
+    player.onGround = false;
+    player.coyoteTimer = 0;
+    player.jumpBufferTimer = 0;
+    spawnDust(player.x + player.w / 2, player.y + player.h, 4);
+  }
+
+  if (!(keys["Space"] || keys["ArrowUp"] || keys["KeyW"]) && player.vy < PLAYER_JUMP * 0.4) {
+    player.vy = Math.max(player.vy, PLAYER_JUMP * 0.4);
+  }
+
+  player.vy += GRAVITY * dt;
+  if (player.vy > 800) player.vy = 800;
+
+  const stepsX = Math.ceil(Math.abs(player.vx * dt) / (TILE / 2));
+  const stepDtX = stepsX > 0 ? dt / stepsX : dt;
+  for (let s = 0; s < stepsX; s++) {
+    player.x += player.vx * stepDtX;
+    collideX(player);
+  }
+
+  const stepsY = Math.ceil(Math.abs(player.vy * dt) / (TILE / 2));
+  const stepDtY = stepsY > 0 ? dt / stepsY : dt;
+  for (let s = 0; s < stepsY; s++) {
+    player.y += player.vy * stepDtY;
+    collideY(player);
+  }
+
+  if (player.onGround && !player.wasOnGround && player.vy >= 0) {
+    spawnDust(player.x + player.w / 2, player.y + player.h, 6);
+  }
+
+  if (player.onGround && Math.abs(player.vx) > 10) {
+    player.walkTimer += dt;
+    if (player.walkTimer > 0.12) {
+      player.walkTimer = 0;
+      spawnDust(player.x + player.w / 2, player.y + player.h, 1);
+    }
+  }
+
+  if (player.x < 0) player.x = 0;
+  if (player.y > ROWS * TILE + 100) {
+    hurtPlayer();
+    if (state === "playing") {
+      player.x = 3 * TILE;
+      player.y = 25 * TILE - 24;
+      player.vx = 0;
+      player.vy = 0;
+    }
+  }
+}
+
+function updateEnemies(dt) {
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    e.anim += dt;
+    if (e.type === "patrol") {
+      e.x += e.dir * e.speed * dt;
+      const col = Math.floor((e.x + (e.dir > 0 ? e.w : 0)) / TILE);
+      const row = Math.floor((e.y + e.h) / TILE);
+      const bodyCol = Math.floor((e.x + e.w / 2) / TILE);
+      const bodyRow = Math.floor((e.y + e.h / 2) / TILE);
+      if (isSolid(bodyRow, col)) {
+        e.dir *= -1;
+        e.x += e.dir * 2;
+      }
+      const groundCol = Math.floor((e.x + e.w / 2 + e.dir * (e.w / 2 + 4)) / TILE);
+      const groundRow = Math.floor((e.y + e.h + 4) / TILE);
+      if (!isSolid(groundRow, groundCol) && !isOneWay(groundRow, groundCol)) {
+        e.dir *= -1;
+      }
+      const ceilCol = Math.floor((e.x + e.w / 2) / TILE);
+      const ceilRow = Math.floor((e.y - 4) / TILE);
+      if (isSolid(ceilRow, ceilCol)) {
+        e.dir *= -1;
+      }
+    } else if (e.type === "flyer") {
+      e.x += e.dir * e.speed * dt;
+      e.y = e.baseY + Math.sin(e.anim * 2) * 16;
+      const col = Math.floor((e.x + (e.dir > 0 ? e.w : 0)) / TILE);
+      const row = Math.floor((e.y + e.h / 2) / TILE);
+      if (isSolid(row, col)) {
+        e.dir *= -1;
+        e.x += e.dir * 2;
+      }
+    }
+
+    if (!aabbOverlap(player, e)) continue;
+    if (player.invTimer > 0) continue;
+    const playerBottom = player.y + player.h;
+    const enemyTop = e.y + 4;
+    if (player.vy > 0 && playerBottom - 8 < enemyTop + 6) {
+      e.alive = false;
+      player.vy = PLAYER_JUMP * 0.65;
+      player.score += 100;
+      spawnHitParticles(e.x + e.w / 2, e.y + e.h / 2, 8, "#ffcc00");
+    } else {
+      hurtPlayer();
+    }
+  }
+}
+
+function updateCoins(dt) {
+  for (const c of coins) {
+    if (!c.alive) continue;
+    c.anim += dt * 3;
+    if (aabbOverlap(player, c)) {
+      c.alive = false;
+      player.score += 25;
+      spawnHitParticles(c.x + c.w / 2, c.y + c.h / 2, 6, "#ffdd00");
+    }
+  }
+}
+
+function updateParticles(dt) {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+  for (let i = dustParticles.length - 1; i >= 0; i--) {
+    const p = dustParticles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vy += 200 * dt;
+    p.life -= dt;
+    if (p.life <= 0) dustParticles.splice(i, 1);
+  }
+}
+
+function updateCamera(dt) {
+  const lookAhead = player.facingRight ? CAMERA_LOOKAHEAD : -CAMERA_LOOKAHEAD;
+  camera.targetX = player.x + player.w / 2 + lookAhead - canvas.width / 2;
+  camera.targetY = player.y + player.h / 2 - canvas.height / 2;
+  camera.targetX = Math.max(0, Math.min(camera.targetX, COLS * TILE - canvas.width));
+  camera.targetY = Math.max(0, Math.min(camera.targetY, ROWS * TILE - canvas.height));
+  camera.x += (camera.targetX - camera.x) * CAMERA_SMOOTH;
+  camera.y += (camera.targetY - camera.y) * CAMERA_SMOOTH;
+}
+
+function drawBackground() {
+  const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  grad.addColorStop(0, "#1a0a2e");
+  grad.addColorStop(0.5, "#16213e");
+  grad.addColorStop(1, "#0f3460");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const parallaxX = camera.x * 0.1;
+  const parallaxY = camera.y * 0.1;
+  ctx.fillStyle = "rgba(255,255,255,0.04)";
+  for (let i = 0; i < 40; i++) {
+    const sx = ((i * 137 + 50) % (canvas.width + 200)) - parallaxX % (canvas.width + 200);
+    const sy = ((i * 97 + 30) % (canvas.height + 100)) - parallaxY * 0.5 % (canvas.height + 100);
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  ctx.fillStyle = "rgba(255,255,255,0.06)";
+  for (let i = 0; i < 15; i++) {
+    const sx = ((i * 211 + 100) % (canvas.width + 400)) - parallaxX * 0.3 % (canvas.width + 400);
+    const sy = ((i * 173 + 60) % (canvas.height + 200)) - parallaxY * 0.2 % (canvas.height + 200);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 1 + (i % 3), 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawTiles() {
+  const startCol = Math.floor(camera.x / TILE);
+  const endCol = Math.ceil((camera.x + canvas.width) / TILE);
+  const startRow = Math.floor(camera.y / TILE);
+  const endRow = Math.ceil((camera.y + canvas.height) / TILE);
+
+  for (let r = startRow; r <= endRow; r++) {
+    for (let c = startCol; c <= endCol; c++) {
+      const t = getTile(r, c);
+      if (t === 0) continue;
+      const sx = c * TILE - camera.x;
+      const sy = r * TILE - camera.y;
+
+      if (t === 1) {
+        const above = isSolid(r - 1, c);
+        ctx.fillStyle = above ? "#5a8a5a" : "#4a6a4a";
+        ctx.fillRect(sx, sy, TILE, TILE);
+        ctx.fillStyle = above ? "#6aaa6a" : "#5a7a5a";
+        ctx.fillRect(sx + 2, sy + 2, TILE - 4, 3);
+        if (above) {
+          ctx.fillStyle = "#7acc7a";
+          ctx.fillRect(sx + 1, sy, TILE - 2, 3);
+        }
+        ctx.fillStyle = "rgba(0,0,0,0.15)";
+        ctx.fillRect(sx, sy + TILE - 2, TILE, 2);
+        ctx.fillRect(sx + TILE - 2, sy, 2, TILE);
+        ctx.fillStyle = "rgba(255,255,255,0.05)";
+        ctx.fillRect(sx, sy, 2, TILE);
+      } else if (t === 2) {
+        ctx.fillStyle = "#8a7a5a";
+        ctx.fillRect(sx, sy + 4, TILE, TILE - 4);
+        ctx.fillStyle = "#9a8a6a";
+        ctx.fillRect(sx + 2, sy + 4, TILE - 4, 3);
+        ctx.fillStyle = "rgba(0,0,0,0.12)";
+        ctx.fillRect(sx, sy + TILE - 3, TILE, 3);
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fillRect(sx + 4, sy + 10, 6, 2);
+        ctx.fillRect(sx + 18, sy + 16, 8, 2);
+      }
+    }
+  }
+}
+
+function drawPlayer() {
+  if (player.invTimer > 0 && Math.floor(player.invTimer * 10) % 2 === 0) return;
+
+  const sx = player.x - camera.x;
+  const sy = player.y - camera.y;
+
+  if (player.hurtTimer > 0) {
+    ctx.fillStyle = "rgba(255,50,50,0.3)";
+    ctx.fillRect(sx - 3, sy - 3, player.w + 6, player.h + 6);
+  }
+
+  ctx.fillStyle = player.facingRight ? "#4a90d9" : "#3a7ac9";
+  ctx.fillRect(sx + 2, sy + 6, player.w - 4, player.h - 6);
+
+  ctx.fillStyle = "#e8c8a0";
+  const headX = sx + 3;
+  const headY = sy;
+  ctx.fillRect(headX, headY, player.w - 6, 10);
+
+  ctx.fillStyle = "#2a2a2a";
+  const eyeOff = player.facingRight ? 10 : 4;
+  ctx.fillRect(sx + eyeOff, headY + 3, 3, 3);
+
+  ctx.fillStyle = player.facingRight ? "#4a90d9" : "#3a7ac9";
+  ctx.fillRect(sx, sy + 8, 4, 10);
+  ctx.fillRect(sx + player.w - 4, sy + 8, 4, 10);
+
+  ctx.fillStyle = "#3a3a5a";
+  const legPhase = player.onGround ? Math.sin(player.walkTimer * 20) * 3 : -2;
+  ctx.fillRect(sx + 4, sy + player.h - 6, 5, 6 + legPhase);
+  ctx.fillRect(sx + player.w - 9, sy + player.h - 6, 5, 6 - legPhase);
+}
+
+function drawEnemies() {
+  for (const e of enemies) {
+    if (!e.alive) continue;
+    const sx = e.x - camera.x;
+    const sy = e.y - camera.y;
+
+    if (e.type === "patrol") {
+      ctx.fillStyle = "#cc4444";
+      ctx.fillRect(sx + 2, sy + 2, e.w - 4, e.h - 4);
+      ctx.fillStyle = "#dd6666";
+      ctx.fillRect(sx + 4, sy + 4, e.w - 8, e.h - 8);
+
+      ctx.fillStyle = "#fff";
+      const eyeDir = e.dir > 0 ? 10 : 4;
+      ctx.fillRect(sx + eyeDir, sy + 6, 4, 4);
+      ctx.fillStyle = "#222";
+      ctx.fillRect(sx + eyeDir + (e.dir > 0 ? 2 : 0), sy + 7, 2, 2);
+
+      ctx.fillStyle = "#aa3333";
+      const spikes = Math.sin(e.anim * 4) > 0;
+      if (spikes) {
+        ctx.fillRect(sx, sy - 2, 3, 4);
+        ctx.fillRect(sx + e.w - 3, sy - 2, 3, 4);
+      }
+    } else if (e.type === "flyer") {
+      ctx.fillStyle = "#aa44cc";
+      ctx.fillRect(sx + 3, sy + 2, e.w - 6, e.h - 4);
+      ctx.fillStyle = "#cc66ee";
+      ctx.fillRect(sx + 5, sy + 4, e.w - 10, e.h - 8);
+
+      const wingY = Math.sin(e.anim * 8) * 4;
+      ctx.fillStyle = "#9933bb";
+      ctx.fillRect(sx - 4, sy + 4 + wingY, 7, 5);
+      ctx.fillRect(sx + e.w - 3, sy + 4 - wingY, 7, 5);
+
+      ctx.fillStyle = "#ffff44";
+      ctx.fillRect(sx + 6, sy + 5, 3, 3);
+      ctx.fillRect(sx + 11, sy + 5, 3, 3);
+    }
+  }
+}
+
+function drawCoins() {
+  for (const c of coins) {
+    if (!c.alive) continue;
+    const sx = c.x - camera.x;
+    const sy = c.y - camera.y;
+    const bounce = Math.sin(c.anim) * 2;
+
+    ctx.fillStyle = "#ffdd00";
+    ctx.beginPath();
+    ctx.arc(sx + c.w / 2, sy + c.h / 2 + bounce, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ffee55";
+    ctx.beginPath();
+    ctx.arc(sx + c.w / 2 - 1, sy + c.h / 2 + bounce - 1, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = "#ccaa00";
+    ctx.fillRect(sx + c.w / 2 - 1, sy + c.h / 2 + bounce - 4, 2, 8);
+  }
+}
+
+function drawGoal() {
+  if (!goalPos) return;
+  const sx = goalPos.x - camera.x;
+  const sy = goalPos.y - camera.y;
+
+  ctx.fillStyle = "#ffaa00";
+  ctx.fillRect(sx + 12, sy + 8, 8, TILE * 2 - 8);
+
+  ctx.fillStyle = "#ffcc44";
+  ctx.beginPath();
+  ctx.moveTo(sx + 12, sy + 8);
+  ctx.lineTo(sx + 40, sy + 20);
+  ctx.lineTo(sx + 12, sy + 32);
+  ctx.closePath();
+  ctx.fill();
+
+  const glow = 0.3 + Math.sin(totalTime * 3) * 0.2;
+  ctx.fillStyle = `rgba(255,200,50,${glow})`;
+  ctx.beginPath();
+  ctx.arc(sx + 16, sy + 12, 12 + Math.sin(totalTime * 2) * 3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawParticles() {
+  for (const p of particles) {
+    const alpha = p.life / p.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x - camera.x - p.size / 2, p.y - camera.y - p.size / 2, p.size, p.size);
+  }
+  for (const p of dustParticles) {
+    const alpha = (p.life / p.maxLife) * 0.6;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ccbbaa";
+    ctx.beginPath();
+    ctx.arc(p.x - camera.x, p.y - camera.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawHUD() {
+  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.fillRect(8, 8, 180, 50);
+  ctx.strokeStyle = "rgba(255,255,255,0.15)";
+  ctx.strokeRect(8, 8, 180, 50);
+
+  ctx.fillStyle = "#ff4444";
+  for (let i = 0; i < player.lives; i++) {
+    const hx = 20 + i * 22;
+    ctx.beginPath();
+    ctx.arc(hx + 6, 28, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(hx + 14, 28, 6, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillRect(hx, 26, 20, 10);
+    ctx.fillRect(hx + 2, 36, 16, 4);
+  }
+
+  ctx.fillStyle = "#ffdd00";
+  ctx.font = "bold 16px monospace";
+  ctx.fillText("SCORE: " + player.score, 20, 52);
+}
+
+function drawTitle() {
+  ctx.fillStyle = "rgba(0,0,0,0.7)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#4a90d9";
+  ctx.font = "bold 48px monospace";
+  ctx.fillText("AETHER JUMP", canvas.width / 2, canvas.height / 2 - 80);
+
+  ctx.fillStyle = "#aaccee";
+  ctx.font = "18px monospace";
+  ctx.fillText("Un juego de plataformas 2D original", canvas.width / 2, canvas.height / 2 - 30);
+
+  ctx.fillStyle = "#ffdd00";
+  ctx.font = "bold 20px monospace";
+  ctx.fillText("Presiona ENTER para jugar", canvas.width / 2, canvas.height / 2 + 30);
+
+  ctx.fillStyle = "#88aacc";
+  ctx.font = "14px monospace";
+  ctx.fillText("Mover: A/D o Flechas  |  Saltar: W/Arriba/Espacio", canvas.width / 2, canvas.height / 2 + 70);
+  ctx.fillText("Pisar enemigos = matar  |  Tocar de lado = dano", canvas.width / 2, canvas.height / 2 + 92);
+  ctx.fillText("Reiniciar: R", canvas.width / 2, canvas.height / 2 + 114);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+function drawGameOver() {
+  ctx.fillStyle = "rgba(0,0,0,0.8)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#ff4444";
+  ctx.font = "bold 42px monospace";
+  ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 30);
+
+  ctx.fillStyle = "#aabbcc";
+  ctx.font = "18px monospace";
+  ctx.fillText("Puntaje: " + player.score, canvas.width / 2, canvas.height / 2 + 20);
+
+  ctx.fillStyle = "#ffdd00";
+  ctx.font = "bold 18px monospace";
+  ctx.fillText("Presiona R para reiniciar", canvas.width / 2, canvas.height / 2 + 60);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+function drawVictory() {
+  ctx.fillStyle = "rgba(0,0,0,0.6)";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#ffdd00";
+  ctx.font = "bold 42px monospace";
+  ctx.fillText("VICTORIA!", canvas.width / 2, canvas.height / 2 - 50);
+
+  ctx.fillStyle = "#aaddff";
+  ctx.font = "22px monospace";
+  ctx.fillText("Has completado el nivel!", canvas.width / 2, canvas.height / 2);
+
+  ctx.fillStyle = "#aaccee";
+  ctx.font = "18px monospace";
+  ctx.fillText("Puntaje final: " + player.score, canvas.width / 2, canvas.height / 2 + 40);
+
+  ctx.fillStyle = "#ffdd00";
+  ctx.font = "bold 18px monospace";
+  ctx.fillText("Presiona R para jugar de nuevo", canvas.width / 2, canvas.height / 2 + 80);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+}
+
+let lastTime = 0;
+let accumulator = 0;
+
+function gameLoop(timestamp) {
+  const rawDt = Math.min((timestamp - lastTime) / 1000, 0.1);
+  lastTime = timestamp;
+
+  if (state === "playing") {
+    accumulator += rawDt;
+    while (accumulator >= FIXED_DT) {
+      updatePlayer(FIXED_DT);
+      updateEnemies(FIXED_DT);
+      updateCoins(FIXED_DT);
+      updateParticles(FIXED_DT);
+      updateCamera(FIXED_DT);
+      totalTime += FIXED_DT;
+
+      if (goalPos && aabbOverlap(player, goalPos)) {
+        state = "victory";
+        player.winTimer = totalTime;
+        spawnHitParticles(goalPos.x + goalPos.w / 2, goalPos.y + goalPos.h / 2, 20, "#ffcc00");
+      }
+
+      if (shakeTimer > 0) {
+        shakeTimer -= FIXED_DT;
+        if (shakeTimer <= 0) shakeIntensity = 0;
+      }
+
+      if (player.hurtTimer <= 0 && player.lives <= 0) {
+        state = "gameover";
+      }
+    }
+  } else {
+    updateParticles(rawDt);
+  }
+
+  if (keyJust("Enter") && state === "title") {
+    state = "playing";
+    resetGame();
+  }
+  if (keyJust("KeyR") && (state === "gameover" || state === "victory")) {
+    state = "playing";
+    resetGame();
+  }
+
+  ctx.save();
+  if (shakeTimer > 0) {
+    ctx.translate(
+      (Math.random() - 0.5) * shakeIntensity * 2,
+      (Math.random() - 0.5) * shakeIntensity * 2
+    );
+  }
+
+  drawBackground();
+  drawTiles();
+  drawGoal();
+  drawCoins();
+  drawEnemies();
+  if (state === "playing" || state === "victory") drawPlayer();
+  drawParticles();
+  drawHUD();
+
+  ctx.restore();
+
+  if (state === "title") drawTitle();
+  else if (state === "gameover") drawGameOver();
+  else if (state === "victory") drawVictory();
+
+  lastKeys = { ...keys };
+  requestAnimationFrame(gameLoop);
+}
+
+parseLevel();
+resetGame();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

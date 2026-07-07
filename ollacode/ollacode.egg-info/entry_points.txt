@@ -1,0 +1,2 @@
+[console_scripts]
+ollacode = ollacode.__main__:main

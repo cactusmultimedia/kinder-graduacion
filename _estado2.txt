@@ -1,0 +1,1 @@
+Documento: agradecieminto 2026[0] emmanuel-paquete2 visible=true[1] Fondo visible=trueBounds foto:  left: 0.27333333333333 in  top: 0.24666666666667 in  right: 4.27333333333333 in  bottom: 6.24666666666667 in
