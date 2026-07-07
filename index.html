@@ -8,6 +8,27 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        .nav-niveles {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+            display: flex; justify-content: center; gap: 0.5rem;
+            padding: 0.8rem; background: rgba(15,12,41,0.9);
+            backdrop-filter: blur(10px); border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-niveles a {
+            color: rgba(255,255,255,0.6); text-decoration: none;
+            padding: 0.4rem 1.2rem; border-radius: 20px;
+            font-size: 0.85rem; font-family: 'Playfair Display', serif;
+            transition: all 0.3s; border: 1px solid transparent;
+        }
+        .nav-niveles a:hover, .nav-niveles a.active {
+            color: white; border-color: rgba(255,255,255,0.3);
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-niveles a.active {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            color: #1a1a3e; border-color: transparent; font-weight: bold;
+        }
+
         body {
             font-family: 'Georgia', serif;
             background: linear-gradient(135deg, #0f0c29 0%, #1a1a3e 30%, #24243e 70%, #0f0c29 100%);
@@ -91,6 +112,17 @@
             .polaroid:hover { transform: none !important; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
         }
 
+        .polaroid-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 3px;
+        }
+        .polaroid-placeholder span {
+            color: white; font-family: "Playfair Display", serif;
+            font-size: 1.2rem; text-align: center; padding: 1rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
         .polaroid img {
             width: 280px;
             height: 280px;
@@ -597,7 +629,18 @@
                 padding: 12px 12px 55px 12px;
                 width: 304px;
             }
-            .polaroid img {
+            .polaroid-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 3px;
+        }
+        .polaroid-placeholder span {
+            color: white; font-family: "Playfair Display", serif;
+            font-size: 1.2rem; text-align: center; padding: 1rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .polaroid img {
                 width: 280px;
                 height: 280px;
             }
@@ -622,7 +665,18 @@
                 padding: 8px 8px 45px 8px;
                 width: 260px;
             }
-            .polaroid img {
+            .polaroid-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 3px;
+        }
+        .polaroid-placeholder span {
+            color: white; font-family: "Playfair Display", serif;
+            font-size: 1.2rem; text-align: center; padding: 1rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .polaroid img {
                 width: 244px;
                 height: 244px;
             }
@@ -634,7 +688,13 @@
     </style>
 </head>
 <body>
-    <section class="hero">
+    <nav class="nav-niveles">
+        <a href="index.html" class="active">Kinder</a>
+        <a href="primaria.html">Primaria</a>
+        <a href="secundaria.html">Secundaria</a>
+        <a href="prepa.html">Prepa</a>
+    </nav>
+    <section class="hero" style="padding-top:4rem;">
         <h1>Graduaciones 2026</h1>
         <p>Celebrando el inicio de una gran aventura</p>
         <div class="scroll-indicator">↓</div>
@@ -727,7 +787,7 @@
                 div.style.left = `calc(50% - ${mobileWidth()}px)`;
             }
             div.innerHTML = `
-                <img src="${BASE_PORTADAS}${portadas[i]}" alt="Graduación ${nino.id}" loading="lazy" decoding="async">
+                ${portadas[i] ? `<img src="${BASE_PORTADAS}${portadas[i]}" alt="${nino.caption}" loading="lazy" decoding="async">` : `<div class="polaroid-placeholder"><span>${nino.caption}</span></div>`}
                 <div class="caption">${nino.caption}</div>
             `;
             div.addEventListener('click', () => pedirCodigo(nino));
