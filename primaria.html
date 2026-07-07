@@ -728,24 +728,22 @@
 
         const isMobile = () => window.innerWidth <= 768;
         const mobileWidth = () => window.innerWidth <= 480 ? 130 : 152;
-        const mobileStep = () => window.innerWidth <= 480 ? 7 : 6;
+        const offsetsL = [5, 9, 3, 12, 6, 2, 10, 4, 8, 7, 11];
+        const offsetsR = [52, 56, 49, 58, 53, 48, 55, 51, 57, 50, 54];
 
-        function posicionarPolaroid(div, i, total) {
+        function posicionarPolaroid(div, i, total, rows) {
             const mobile = isMobile();
             if (mobile) {
-                const step = mobileStep();
-                const topPct = 10 + i * step;
+                const topPct = 10 + i * 8;
                 div.style.top = topPct + '%';
                 div.style.left = `calc(50% - ${mobileWidth()}px)`;
                 div.style.transform = `rotate(${(i % 2 === 0 ? -1 : 1) * (1 + (i % 5) * 0.5)}deg)`;
             } else {
-                const cols = 2;
-                const col = i % cols;
-                const row = Math.floor(i / cols);
-                const rows = Math.ceil(total / cols);
-                const topPct = 6 + row * (82 / rows);
-                const leftPct = col === 0 ? 5 : 50;
-                const rot = (col === 0 ? -1 : 1) * (2 + (i % 7) * 0.4);
+                const col = i % 2;
+                const row = Math.floor(i / 2);
+                const topPct = 4 + row * (86 / rows);
+                const leftPct = col === 0 ? offsetsL[row % offsetsL.length] : offsetsR[row % offsetsR.length];
+                const rot = (col === 0 ? -1 : 1) * (2 + (i % 6) * 0.3);
                 div.style.top = topPct + '%';
                 div.style.left = leftPct + '%';
                 div.style.transform = `rotate(${rot}deg)`;
@@ -753,10 +751,11 @@
         }
 
         const totalNinos = ninos.length;
+        const totalRows = Math.ceil(totalNinos / 2);
         ninos.forEach((nino, i) => {
             const div = document.createElement('div');
             div.className = 'polaroid';
-            posicionarPolaroid(div, i, totalNinos);
+            posicionarPolaroid(div, i, totalNinos, totalRows);
             div.innerHTML = `
                 ${portadas[i] ? `<img src="${BASE_PORTADAS}${portadas[i]}" alt="${nino.caption}" loading="lazy" decoding="async">` : `<div class="polaroid-placeholder"><span>${nino.caption}</span></div>`}
                 <div class="caption">${nino.caption}</div>
@@ -795,9 +794,9 @@
             const w = window.innerWidth;
             const n = totalNinos;
             let h = '400vh';
-            if (w <= 480) h = Math.max(400, n * 65) + 'vh';
-            else if (w <= 768) h = Math.max(400, n * 55) + 'vh';
-            else h = Math.max(300, n * 18) + 'vh';
+            if (w <= 480) h = Math.max(500, n * 70) + 'vh';
+            else if (w <= 768) h = Math.max(450, n * 60) + 'vh';
+            else h = Math.max(300, totalRows * 36) + 'vh';
             container.style.height = h;
             ScrollTrigger.refresh();
         }
@@ -817,7 +816,7 @@
                 }
             }
             document.querySelectorAll('.polaroid').forEach((p, i) => {
-                posicionarPolaroid(p, i, totalNinos);
+                posicionarPolaroid(p, i, totalNinos, totalRows);
             });
         });
 
