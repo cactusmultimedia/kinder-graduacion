@@ -798,9 +798,9 @@
             const w = window.innerWidth;
             let h;
             const n = totalNinos;
-            if (w <= 480) h = Math.max(600, n * 60) + 'vh';
-            else if (w <= 768) h = Math.max(500, n * 48) + 'vh';
-            else h = Math.max(350, n * 32) + 'vh';
+            if (w <= 480) h = Math.max(650, n * 60) + 'vh';
+            else if (w <= 768) h = Math.max(550, n * 48) + 'vh';
+            else h = Math.max(400, n * 32) + 'vh';
             container.style.height = h;
             ScrollTrigger.refresh();
         }
