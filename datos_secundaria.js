@@ -2,7 +2,7 @@ const ninos = [
   { id: 1, codigo: "se01", caption: "Aldo", fotos: ["aldo.JPG", "familia.jpg"] },
   { id: 2, codigo: "se02", caption: "Angel", fotos: ["angel blanco.JPG", "familia.jpg"] },
   { id: 3, codigo: "se03", caption: "Arisbeth", fotos: [] },
-  { id: 4, codigo: "se04", caption: "Axel", fotos: [] },
+  { id: 4, codigo: "se04", caption: "Axel", fotos: ["axel.jpg"] },
   { id: 5, codigo: "se05", caption: "Camila", fotos: ["camila.JPG", "familia.jpg"] },
   { id: 6, codigo: "se06", caption: "Cesar", fotos: ["cesar.JPG", "familia.jpg"] },
   { id: 7, codigo: "se07", caption: "Delmar", fotos: ["delmar.JPG", "familia.jpg"] },
@@ -22,6 +22,8 @@ const ninos = [
   { id: 21, codigo: "se21", caption: "Ximena", fotos: ["ximena.JPG", "familia.jpg"] },
   { id: 22, codigo: "se22", caption: "Ximena Solail", fotos: ["ximena solai.JPG", "familia.jpg"] },
   { id: 23, codigo: "se23", caption: "Yatziri", fotos: ["yatziri.JPG", "familia.jpg"] },
+  { id: 24, codigo: "se24", caption: "Uriel", fotos: ["uriel.jpg", "familia.jpg"] },
+  { id: 25, codigo: "se25", caption: "Abdel", fotos: ["abdel.jpg", "familia.jpg"] },
 ];
 
 const portadas = [
@@ -48,4 +50,6 @@ const portadas = [
   "ximena-paquete1.jpg",
   "ximenasolail-paquete2.jpg",
   "yatziri-paquete1.jpg",
+  "uriel-portada.jpg",
+  "abdel-portada.jpg",
 ];
